@@ -1,0 +1,95 @@
+{
+  "id": "MunjizSlaWatchdog",
+  "name": "Munjiz · SLA watchdog",
+  "nodes": [
+    {
+      "id": "9e4d71f4-388e-5ac4-a35e-ea06af9f836b",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "f9d5b092-dafb-5160-873b-5479cb1ca2db",
+      "name": "Run now",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        380
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "95f299d2-a6d4-5c35-867f-a6bb8c5500cd",
+      "name": "Run the SLA sweep in Munjiz",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.MUNJIZ_API_URL }}/api/sla/sweep",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Munjiz-Token",
+              "value": "={{ $env.MUNJIZ_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Run the SLA sweep in Munjiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run now": {
+      "main": [
+        [
+          {
+            "node": "Run the SLA sweep in Munjiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Riyadh"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

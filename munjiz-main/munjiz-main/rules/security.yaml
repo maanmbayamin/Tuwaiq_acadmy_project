@@ -1,0 +1,65 @@
+# Accreditation & Security desk: temporary site permits for pavilion workers and contractors.
+# SIMULATED rules, modelled on typical World Expo participant regulations.
+desk: security
+icon: id-card
+title: {en: Accreditation & Security, ar: الاعتماد والأمن}
+
+fields:
+  worker_count:
+    label: {en: Workers, ar: عدد العمال}
+    ask: {en: "how many workers are coming", ar: "عدد العمال القادمين"}
+  workers:
+    label: {en: Names and IDs, ar: الأسماء والهويات}
+    type: list
+    item_fields: [full_name, id_number]
+    ask: {en: "the full name and ID or passport number of each worker", ar: "الاسم الكامل ورقم الهوية أو الجواز لكل عامل"}
+  access_datetime:
+    label: {en: Access from, ar: وقت الدخول}
+    type: datetime
+    ask: {en: "when the workers arrive", ar: "وقت وصول العمال"}
+
+required: [workers, access_datetime]
+
+# Desk response target. The SLA clock starts when this part (or a fixed version of it) reaches the desk.
+# After review_minutes the desk gets a reminder; after escalate_minutes it goes to the supervisor.
+sla: {review_minutes: 240, escalate_minutes: 480}
+
+checks:
+  - id: names_match_count
+    type: count_match
+    field: workers
+    count_field: worker_count
+    severity: block
+    message:
+      en: "The number of names doesn't match the number of workers."
+      ar: "عدد الأسماء لا يطابق عدد العمال."
+  - id: max_workers
+    type: max_value
+    field: worker_count
+    value: 6
+    severity: block
+    message:
+      en: "A delivery permit covers at most {value} workers."
+      ar: "تصريح التوصيل يغطي {value} عمال كحد أقصى."
+  - id: id_format
+    type: item_pattern
+    field: workers
+    item_field: id_number
+    pattern: '^([12]\d{9}|[A-Z]{1,2}\d{6,8})$'
+    severity: block
+    message:
+      en: "Each ID must be a 10-digit Saudi ID / Iqama or a passport number."
+      ar: "يجب أن يكون رقم الهوية 10 أرقام (هوية وطنية أو إقامة) أو رقم جواز سفر."
+  - id: notice
+    type: min_notice_hours
+    field: access_datetime
+    hours: 12
+    severity: block
+    message:
+      en: "Worker permits need at least {hours} hours' notice."
+      ar: "تصاريح العمال تحتاج إشعارًا قبل {hours} ساعة على الأقل."
+
+assign:
+  - set:
+      permit_type: {en: "Temporary contractor pass (single visit)", ar: "تصريح مقاول مؤقت (زيارة واحدة)"}
+      badge_pickup: {en: "Accreditation Centre at Logistics Gate L2", ar: "مركز الاعتماد عند بوابة اللوجستيات L2"}

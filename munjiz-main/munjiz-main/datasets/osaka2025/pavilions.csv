@@ -1,0 +1,147 @@
+participant,code,pavilion,zone
+Angola,AGO,Self-built (Type A/X),Saving Lives
+Australia,AUS,Self-built (Type A/X),Connecting Lives
+Austria,AUT,Self-built (Type A/X),Empowering Lives
+Azerbaijan,AZE,Self-built (Type A/X),Connecting Lives
+Bahrain,BHR,Self-built (Type A/X),Empowering Lives
+Latvia,LVA,Self-built (Type A/X),Saving Lives
+Lithuania,LTU,Self-built (Type A/X),Saving Lives
+Belgium,BEL,Self-built (Type A/X),Saving Lives
+Bulgaria,BGR,Self-built (Type A/X),Saving Lives
+Canada,CAN,Self-built (Type A/X),Empowering Lives
+China,CHN,Self-built (Type A/X),Empowering Lives
+Colombia,COL,Self-built (Type A/X),Empowering Lives
+Czech Republic,CZE,Self-built (Type A/X),Empowering Lives
+France,FRA,Self-built (Type A/X),Empowering Lives
+Germany,DEU,Self-built (Type A/X),Connecting Lives
+Vatican City,VAT,Self-built (Type A/X),Saving Lives
+Hungary,HUN,Self-built (Type A/X),Saving Lives
+India,IND,Self-built (Type A/X),Connecting Lives
+Indonesia,IDN,Self-built (Type A/X),Connecting Lives
+Ireland,IRL,Self-built (Type A/X),Empowering Lives
+Italy,ITA,Self-built (Type A/X),Saving Lives
+Japan,JPN,Self-built (Type A/X),East Gate
+Kuwait,KWT,Self-built (Type A/X),Empowering Lives
+Luxembourg,LUX,Self-built (Type A/X),Connecting Lives
+Malaysia,MYS,Self-built (Type A/X),Empowering Lives
+Malta,MLT,Self-built (Type A/X),Empowering Lives
+Monaco,MCO,Self-built (Type A/X),Connecting Lives
+Netherlands,NLD,Self-built (Type A/X),Saving Lives
+Denmark,DNK,Self-built (Type A/X),Empowering Lives
+Finland,FIN,Self-built (Type A/X),Empowering Lives
+Iceland,ISL,Self-built (Type A/X),Empowering Lives
+Norway,NOR,Self-built (Type A/X),Empowering Lives
+Sweden,SWE,Self-built (Type A/X),Empowering Lives
+Oman,OMN,Self-built (Type A/X),Saving Lives
+Philippines,PHL,Self-built (Type A/X),Empowering Lives
+Poland,POL,Self-built (Type A/X),Saving Lives
+Portugal,PRT,Self-built (Type A/X),Empowering Lives
+Qatar,QAT,Self-built (Type A/X),Empowering Lives
+Romania,ROU,Self-built (Type A/X),Saving Lives
+Saudi Arabia,SAU,Self-built (Type A/X),Connecting Lives
+Serbia,SRB,Self-built (Type A/X),Connecting Lives
+Singapore,SGP,Self-built (Type A/X),Saving Lives
+South Korea,KOR,Self-built (Type A/X),Connecting Lives
+Spain,ESP,Self-built (Type A/X),Connecting Lives
+Switzerland,CHE,Self-built (Type A/X),Empowering Lives
+Thailand,THA,Self-built (Type A/X),Connecting Lives
+Turkey,TUR,Self-built (Type A/X),Connecting Lives
+Turkmenistan,TKM,Self-built (Type A/X),Empowering Lives
+United Arab Emirates,ARE,Self-built (Type A/X),Empowering Lives
+United Kingdom,GBR,Self-built (Type A/X),Saving Lives
+United States,USA,Self-built (Type A/X),Empowering Lives
+Uzbekistan,UZB,Self-built (Type A/X),Connecting Lives
+Barbados,BRB,Commons A,
+Bolivia,BOL,Commons A,
+Burundi,BDI,Commons A,
+Comoros,COM,Commons A,
+Eswatini,SWZ,Commons A,
+Ghana,GHA,Commons A,
+Grenada,GRD,Commons A,
+Guinea-Bissau,GNB,Commons A,
+Kenya,KEN,Commons A,
+Kosovo,KOS,Commons A,
+Kyrgyzstan,KGZ,Commons A,
+Malawi,MWI,Commons A,
+Mauritius,MUS,Commons A,
+North Macedonia,MKD,Commons A,
+Palau,PLW,Commons A,
+Papua New Guinea,PNG,Commons A,
+Rwanda,RWA,Commons A,
+Samoa,WSM,Commons A,
+Seychelles,SYC,Commons A,
+Suriname,SUR,Commons A,
+Solomon Islands,SLB,Commons A,
+Sri Lanka,LKA,Commons A,
+St. Kitts and Nevis,KNA,Commons A,
+St. Lucia,LCA,Commons A,
+Trinidad and Tobago,TTO,Commons A,
+Tonga,TON,Commons A,
+Uganda,UGA,Commons A,
+Vanuatu,VUT,Commons A,
+Yemen,YEM,Commons A,
+Cabo Verde,CPV,Commons B,
+Ethiopia,ETH,Commons B,
+Guyana,GUY,Commons B,
+Gambia,GMB,Commons B,
+Ivory Coast,CIV,Commons B,
+Zambia,ZMB,Commons B,
+Sierra Leone,SLE,Commons B,
+Djibouti,DJI,Commons B,
+Jamaica,JAM,Commons B,
+Zimbabwe,ZWE,Commons B,
+Saint Vincent and the Grenadines,VCT,Commons B,
+Somalia,SOM,Commons B,
+Tanzania,TZA,Commons B,
+Chad,TCD,Commons B,
+Central African Republic,CAF,Commons B,
+Tuvalu,TUV,Commons B,
+Dominican Republic,DOM,Commons B,
+Nauru,NRU,Commons B,
+Haiti,HTI,Commons B,
+Paraguay,PRY,Commons B,
+East Timor,TLS,Commons B,
+Fiji,FJI,Commons B,
+Benin,BEN,Commons B,
+Micronesia,FSM,Commons B,
+Mauritania,MRT,Commons B,
+Lesotho,LSO,Commons B,
+Israel,ISR,Commons C,
+Ukraine,UKR,Commons C,
+Uruguay,URY,Commons C,
+Gabon,GAB,Commons C,
+Guatemala,GTM,Commons C,
+Croatia,HRV,Commons C,
+San Marino,SMR,Commons C,
+Slovakia,SVK,Commons C,
+Slovenia,SVN,Commons C,
+Panama,PAN,Commons C,
+Montenegro,MNE,Commons C,
+Antigua and Barbuda,ATG,Commons D,
+Cameroon,CMR,Commons D,
+Guinea,GIN,Commons D,
+Cuba,CUB,Commons D,
+Democratic Republic of the Congo,COD,Commons D,
+São Tomé and Príncipe,STP,Commons D,
+Sudan,SDN,Commons D,
+Equatorial Guinea,GNQ,Commons D,
+Tajikistan,TJK,Commons D,
+Togo,TGO,Commons D,
+Nigeria,NGA,Commons D,
+Pakistan,PAK,Commons D,
+Palestine,PSE,Commons D,
+Bhutan,BTN,Commons D,
+Burkina Faso,BFA,Commons D,
+Honduras,HND,Commons D,
+Belize,BLZ,Commons D,
+Marshall Islands,MHL,Commons D,
+Madagascar,MDG,Commons D,
+Mali,MLI,Commons D,
+South Sudan,SSD,Commons D,
+Moldova,MDA,Commons D,
+Mongolia,MNG,Commons D,
+Laos,LAO,Commons D,
+Liberia,LBR,Commons D,
+Armenia,ARM,Commons F,
+Brunei,BRN,Commons F,
+Kazakhstan,KAZ,Commons F,

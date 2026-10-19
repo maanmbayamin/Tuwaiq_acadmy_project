@@ -1,0 +1,28 @@
+# n8n for Munjiz. Start everything with: scripts/n8n_setup.sh (first time), then scripts/start.sh
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:1.88.0
+    container_name: munjiz-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=Asia/Riyadh
+      - TZ=Asia/Riyadh
+      - N8N_SECURE_COOKIE=false
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_PERSONALIZATION_ENABLED=false
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      # Where the workflows reach the Munjiz API, and the token they send back.
+      - MUNJIZ_API_URL=${MUNJIZ_PUBLIC_API_URL:-http://host.docker.internal:8000}
+      - MUNJIZ_API_TOKEN=${MUNJIZ_API_TOKEN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/workflows:ro
+
+volumes:
+  n8n_data:

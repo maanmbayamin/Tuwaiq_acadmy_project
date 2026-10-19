@@ -1,0 +1,46 @@
+# Cross-desk checks: clashes BETWEEN desk sub-requests that no single desk can see on its own.
+# SIMULATED rules, modelled on typical World Expo participant regulations.
+# Checked by code (munjiz/conflicts.py), never by the LLM. Organisers can change the numbers on the Desk rules page.
+desk: cross_desk
+icon: git-merge
+title: {en: Cross-desk check, ar: التحقق بين الجهات}
+
+params:
+  utility_crew_hours: {start: "06:00", end: "23:00"}   # when utility crews make new power connections
+  permit_valid_hours: 8                                  # a single-visit contractor pass is valid this long
+  badge_walk_minutes: 30                                 # walking time from the Accreditation Centre to another gate
+
+checks:
+  - id: workers_after_truck
+    desks: [logistics, security]
+    severity: block
+    message:
+      en: "The truck arrives at {arrival}, but the workers' permits only start at {access}. Nobody could unload it."
+      ar: "تصل الشاحنة {arrival}، لكن تصاريح العمال تبدأ {access}. لن يكون هناك من يفرّغها."
+    fix:
+      en: "Start the worker permits at {arrival}, when the truck arrives."
+      ar: "تبدأ تصاريح العمال {arrival} مع وصول الشاحنة."
+  - id: permit_expires_before_delivery
+    desks: [logistics, security]
+    severity: block
+    message:
+      en: "The worker permits start at {access} and are valid {hours} hours, so they expire before the truck's slot at {arrival}."
+      ar: "تبدأ تصاريح العمال {access} وصلاحيتها {hours} ساعات، فتنتهي قبل موعد الشاحنة {arrival}."
+    fix:
+      en: "Start the worker permits at {arrival}, when the truck arrives."
+      ar: "تبدأ تصاريح العمال {arrival} مع وصول الشاحنة."
+  - id: power_outside_crew_hours
+    desks: [logistics, facilities]
+    severity: block
+    message:
+      en: "The power is needed at {needed}, but utility crews only connect power between {start} and {end}. The truck's night window and the crews' hours don't meet then."
+      ar: "الكهرباء مطلوبة {needed}، لكن فرق المرافق توصّل الكهرباء بين {start} و{end} فقط. نافذة الشاحنة الليلية وساعات الفرق لا تلتقي في هذا الوقت."
+    fix:
+      en: "Connect the power from {suggested}, before the truck arrives, so the screens can be switched on at once."
+      ar: "توصيل الكهرباء من {suggested} قبل وصول الشاحنة، لتعمل الشاشات فورًا."
+  - id: badge_pickup_other_gate
+    desks: [logistics, security]
+    severity: note
+    message:
+      en: "Workers collect their passes at the Accreditation Centre (Gate L2), then join the truck at {gate}. Allow {minutes} minutes."
+      ar: "يستلم العمال تصاريحهم من مركز الاعتماد (بوابة L2) ثم يلحقون بالشاحنة عند {gate}. خصصوا {minutes} دقيقة."

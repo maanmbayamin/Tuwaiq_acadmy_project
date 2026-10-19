@@ -1,0 +1,468 @@
+<title>Munjiz Request Workflow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@500;700&display=swap">
+<style>
+/* Layout: one wide swimlane figure, a narration bar that drives it, then the step list and UML notation side by side. */
+:root {
+  --bg: #F4F7F5;
+  --surface: #FFFFFF;
+  --ink: #10201A;
+  --muted: #5A6B63;
+  --line: #CBD6D1;
+  --line-strong: #8FA39A;
+  --lane-a: #EAF1EE;
+  --lane-b: #F6F9F7;
+  --accent: #0B6B4F;
+  --accent-soft: #D5EEE3;
+  --accent-ink: #FFFFFF;
+  --warn: #9A5B00;
+  --font-display: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-ar: "IBM Plex Sans Arabic", "Geeza Pro", "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C1411; --surface: #121C18; --ink: #E4EEE9; --muted: #93A79E; --line: #2A3933; --line-strong: #4E6159;
+    --lane-a: #15211C; --lane-b: #101915; --accent: #3DC496; --accent-soft: #123A2C; --accent-ink: #06130E; --warn: #E7A94A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C1411; --surface: #121C18; --ink: #E4EEE9; --muted: #93A79E; --line: #2A3933; --line-strong: #4E6159;
+  --lane-a: #15211C; --lane-b: #101915; --accent: #3DC496; --accent-soft: #123A2C; --accent-ink: #06130E; --warn: #E7A94A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 48px; display: grid; gap: 18px; }
+
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--font-display); font-size: clamp(26px, 3.4vw, 38px); line-height: 1.1; margin: 0; letter-spacing: -0.015em; text-wrap: balance; }
+h1 .ar { font-family: var(--font-ar); color: var(--accent); font-weight: 700; }
+.lede { margin: 0; max-width: 72ch; color: var(--muted); }
+
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.scroller { overflow-x: auto; }
+svg.uml { display: block; width: 100%; min-width: 1080px; height: auto; color: var(--ink); }
+figcaption { padding: 10px 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+
+/* SVG parts (styled from the page, not inside the SVG) */
+.lane-a { fill: var(--lane-a); } .lane-b { fill: var(--lane-b); }
+.lane-sep { stroke: var(--line); stroke-width: 1; }
+.lane-name { font: 600 13px var(--font-body); fill: var(--ink); }
+.lane-sub { font: 400 11px var(--font-body); fill: var(--muted); }
+.zone { fill: var(--accent-soft); } .zone.admin { fill: var(--accent); } .zone.bridge { fill: var(--line); }
+.zone-name { font: 600 10px var(--font-mono); letter-spacing: 0.12em; fill: var(--accent); }
+.zone-name.admin { fill: var(--accent-ink); } .zone-name.bridge { fill: var(--ink); }
+.edge.ret { stroke-dasharray: 2 0; }
+.node.warn rect { stroke-dasharray: 4 3; }
+.node rect, .node polygon { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.4; transition: fill .35s, stroke .35s, stroke-width .35s; }
+.node .t { font: 600 12.5px var(--font-body); fill: var(--ink); }
+.node .s { font: 400 10.5px var(--font-body); fill: var(--muted); }
+.node.seen rect, .node.seen polygon { stroke: var(--accent); }
+.node.on rect, .node.on polygon { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.4; }
+.bar { fill: var(--ink); transition: fill .35s; }
+.bar.on, .bar.seen { fill: var(--accent); }
+.pseudo { fill: var(--ink); transition: fill .35s; }
+.pseudo.on, .pseudo.seen { fill: var(--accent); }
+.ring { fill: none; stroke: var(--ink); stroke-width: 1.6; }
+.ring.on, .ring.seen { stroke: var(--accent); }
+.edge { fill: none; stroke: var(--line-strong); stroke-width: 1.5; marker-end: url(#ah); transition: stroke .35s; }
+.edge.lit { stroke: var(--accent); stroke-width: 2.2; marker-end: url(#ah-on); }
+.edge.obj { stroke-dasharray: 5 4; }
+.ahead { fill: var(--line-strong); } .ahead-on { fill: var(--accent); }
+.guard { font: 400 11px var(--font-mono); fill: var(--muted); }
+.guard.warn { fill: var(--warn); }
+.token-halo { fill: var(--accent); opacity: .22; }
+.token { fill: var(--accent); stroke: var(--surface); stroke-width: 2.5; }
+
+/* Narration + controls */
+.player { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 24px; align-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.now { display: grid; gap: 2px; min-width: 0; }
+.count { font-family: var(--font-mono); font-size: 12px; color: var(--accent); letter-spacing: 0.04em; }
+.now h2 { margin: 0; font-size: 19px; font-family: var(--font-display); }
+.now p { margin: 0; color: var(--muted); max-width: 80ch; min-height: 3.1em; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: 600 14px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+button:hover { border-color: var(--accent); color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); min-width: 96px; }
+button.primary:hover { color: var(--accent-ink); filter: brightness(1.08); }
+button:focus-visible, li[tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.progress { grid-column: 1 / -1; height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+
+.below { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; min-width: 0; }
+.panel h3 { margin: 0 0 10px; font-size: 13px; font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+ol.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; counter-reset: s; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; padding: 7px 8px; border-radius: 8px; cursor: pointer; }
+ol.steps li::before { content: counter(s, decimal-leading-zero); font-family: var(--font-mono); font-size: 12px; color: var(--muted); padding-top: 2px; }
+ol.steps li b { font-weight: 600; }
+ol.steps li span { color: var(--muted); font-size: 13.5px; display: block; }
+ol.steps li.done::before { color: var(--accent); }
+ol.steps li.on { background: var(--accent-soft); }
+ol.steps li.on::before { color: var(--accent); font-weight: 600; }
+.legend { display: grid; gap: 8px; margin: 0; }
+.legend div { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 10px; align-items: center; font-size: 13.5px; }
+.legend svg { width: 54px; height: 24px; color: var(--ink); }
+.legend dt { font-weight: 600; } .legend dd { margin: 0; color: var(--muted); }
+blockquote { margin: 14px 0 0; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--lane-a); border-radius: 0 8px 8px 0; font-size: 14px; }
+blockquote .ar { font-family: var(--font-ar); direction: rtl; display: block; margin-top: 6px; color: var(--muted); }
+
+@media (max-width: 860px) {
+  .below { grid-template-columns: minmax(0, 1fr); }
+  .player { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">UML activity diagram · Expo 2030 Riyadh · Challenge 5.5</div>
+    <h1>Munjiz request workflow <span class="ar">· منجز</span></h1>
+    <p class="lede">How one participant request moves from the Expo app through the agent, each desk's rules and the clashes between desks, becomes one ticket, and is decided by three Expo Admin desks in parallel. A desk can send one part back; only that part is fixed. Press play to follow Scenario A: a display-equipment delivery that needs a gate slot, two worker passes and extra power.</p>
+  </header>
+
+  <figure>
+    <div class="scroller">
+      <svg class="uml" id="uml" viewBox="0 0 1770 762" role="img" aria-label="UML activity diagram with five swimlanes in three zones: participant, Munjiz, Expo Admin. The participant describes a need once; the Munjiz agent extracts fields, splits them by desk and checks each desk's rules in code; if information is missing it asks once and loops back; once complete the participant confirms, one ticket is created, a fork sends the parts to Logistics, Accreditation and Facilities in parallel, staff approve, a join closes the ticket, the participant is notified, and every event feeds the organiser dashboard. Munjiz also checks clashes between desks before submission, lets a desk send one part back to be fixed alone, and watches each part against its desk's response target.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahead" d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker id="ah-on" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahead-on" d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+
+        <!-- Swimlanes -->
+        <rect class="lane-a" x="0" y="20" width="1770" height="130"/>
+        <rect class="lane-b" x="0" y="150" width="1770" height="130"/>
+        <rect class="lane-a" x="0" y="280" width="1770" height="130"/>
+        <rect class="lane-b" x="0" y="410" width="1770" height="190"/>
+        <rect class="lane-a" x="0" y="600" width="1770" height="150"/>
+        <line class="lane-sep" x1="0" y1="150" x2="1770" y2="150"/>
+        <line class="lane-sep" x1="0" y1="280" x2="1770" y2="280"/>
+        <line class="lane-sep" x1="0" y1="410" x2="1770" y2="410"/>
+        <line class="lane-sep" x1="0" y1="600" x2="1770" y2="600"/>
+        <line class="lane-sep" x1="150" y1="20" x2="150" y2="750"/>
+        <!-- Zones: the participant side, the Munjiz bridge, the Expo Admin side -->
+        <rect class="zone" x="0" y="20" width="22" height="130"/>
+        <rect class="zone bridge" x="0" y="150" width="22" height="260"/>
+        <rect class="zone admin" x="0" y="410" width="22" height="340"/>
+        <text class="zone-name" transform="translate(15 85) rotate(-90)" text-anchor="middle">PARTICIPANT</text>
+        <text class="zone-name bridge" transform="translate(15 280) rotate(-90)" text-anchor="middle">MUNJIZ · THE BRIDGE</text>
+        <text class="zone-name admin" transform="translate(15 580) rotate(-90)" text-anchor="middle">EXPO ADMIN</text>
+        <text class="lane-name" x="32" y="82">Participant</text><text class="lane-sub" x="32" y="98">pavilion team · app</text>
+        <text class="lane-name" x="32" y="212">Munjiz agent</text><text class="lane-sub" x="32" y="228">rules in code</text>
+        <text class="lane-name" x="32" y="342">Ticket + n8n</text><text class="lane-sub" x="32" y="358">one ticket</text>
+        <text class="lane-name" x="32" y="502">Service desks</text><text class="lane-sub" x="32" y="518">desk staff</text>
+        <text class="lane-name" x="32" y="667">Oversight</text><text class="lane-sub" x="32" y="683">supervisor · organiser</text>
+
+        <!-- Control flows -->
+        <path class="edge" id="e0" d="M179 85 H205"/>
+        <path class="edge" id="e1" d="M280 110 V215 H375"/>
+        <path class="edge" id="e2" d="M505 215 H525"/>
+        <path class="edge" id="e3" d="M655 215 H675"/>
+        <path class="edge" id="e3b" d="M805 215 H842"/>
+        <path class="edge" id="e4" d="M972 215 H992"/>
+        <path class="edge" id="e5" d="M1020 187 V110"/>
+        <path class="edge" id="e6" d="M950 85 H470 V190"/>
+        <path class="edge" id="e7" d="M1048 215 H1115"/>
+        <path class="edge" id="e8" d="M1180 190 V85 H1230"/>
+        <path class="edge" id="e9" d="M1300 110 V320"/>
+        <path class="edge" id="e10" d="M1300 370 V507 H1408"/>
+        <path class="edge" id="e11a" d="M1414 449 H1440"/>
+        <path class="edge" id="e11b" d="M1414 507 H1440"/>
+        <path class="edge" id="e11c" d="M1414 565 H1440"/>
+        <path class="edge" id="e12a" d="M1600 449 H1624"/>
+        <path class="edge" id="e12b" d="M1600 507 H1624"/>
+        <path class="edge" id="e12c" d="M1600 565 H1624"/>
+        <path class="edge" id="e13" d="M1627 436 V370"/>
+        <path class="edge" id="e14" d="M1627 320 V110"/>
+        <path class="edge" id="e15" d="M1697 85 H1723"/>
+        <!-- Object flows (events) -->
+        <path class="edge ret" id="r1" d="M1500 426 V110"/>
+        <path class="edge ret" id="r2" d="M1420 110 V345 H1370"/>
+        <path class="edge obj" id="s1" d="M1560 588 V690"/>
+        <path class="edge obj" id="o1" d="M1250 370 V651 H1300"/>
+        <path class="edge obj" id="o2" d="M1697 345 H1750 V651 H1480"/>
+
+        <!-- Guards and flow labels -->
+        <text class="guard" x="1030" y="146">[missing info]</text>
+        <text class="guard" x="1030" y="160">ask once</text>
+        <text class="guard" x="635" y="77" text-anchor="middle">answer → re-extract whole chat</text>
+        <text class="guard" x="1081" y="205" text-anchor="middle">[complete]</text>
+        <text class="guard" x="1411" y="595" text-anchor="middle">fork</text>
+        <text class="guard" x="1627" y="595" text-anchor="middle">join</text>
+        <text class="guard warn" x="1695" y="482" text-anchor="middle">[sent back]</text>
+        <text class="guard warn" x="1695" y="496" text-anchor="middle">→ Partially</text>
+        <text class="guard warn" x="1695" y="510" text-anchor="middle">approved</text>
+        <text class="guard warn" x="1508" y="246">[change requested]</text>
+        <text class="guard warn" x="1508" y="260">only that part</text>
+        <text class="guard" x="1428" y="300">v2 · re-checked</text>
+        <text class="guard" x="1568" y="678">SLA clock per part</text>
+        <text class="guard" x="1258" y="624">ticket_submitted → n8n</text>
+        <text class="guard" x="1742" y="624" text-anchor="end">n8n ← ticket_completed</text>
+
+        <!-- Initial and final nodes -->
+        <circle class="pseudo" id="start" cx="170" cy="85" r="9"/>
+        <g id="end"><circle class="ring" cx="1735" cy="85" r="11"/><circle class="pseudo" cx="1735" cy="85" r="6.5"/></g>
+
+        <!-- Actions -->
+        <g class="node" id="n1"><rect x="205" y="60" width="150" height="50" rx="18"/>
+          <text class="t" x="280" y="82" text-anchor="middle">Describe the need</text><text class="s" x="280" y="98" text-anchor="middle">one message · EN or AR</text></g>
+        <g class="node" id="n2"><rect x="375" y="190" width="130" height="50" rx="18"/>
+          <text class="t" x="440" y="212" text-anchor="middle">Extract fields</text><text class="s" x="440" y="228" text-anchor="middle">Claude tool use → JSON</text></g>
+        <g class="node" id="n3"><rect x="525" y="190" width="130" height="50" rx="18"/>
+          <text class="t" x="590" y="212" text-anchor="middle">Split by desk</text><text class="s" x="590" y="228" text-anchor="middle">time, pavilion shared</text></g>
+        <g class="node" id="n4"><rect x="675" y="190" width="130" height="50" rx="18"/>
+          <text class="t" x="740" y="212" text-anchor="middle">Check desk rules</text><text class="s" x="740" y="228" text-anchor="middle">17 rules, in code</text></g>
+        <g class="node" id="nC"><rect x="842" y="190" width="130" height="50" rx="18"/>
+          <text class="t" x="907" y="212" text-anchor="middle">Check clashes</text><text class="s" x="907" y="228" text-anchor="middle">4 checks, in code</text></g>
+        <g class="node" id="d1"><polygon points="1020,187 1048,215 1020,243 992,215"/></g>
+        <g class="node" id="n6"><rect x="950" y="60" width="140" height="50" rx="18"/>
+          <text class="t" x="1020" y="82" text-anchor="middle">Answer follow-up</text><text class="s" x="1020" y="98" text-anchor="middle">plate · IDs · kW</text></g>
+        <g class="node" id="n7"><rect x="1115" y="190" width="130" height="50" rx="18"/>
+          <text class="t" x="1180" y="212" text-anchor="middle">Show summary</text><text class="s" x="1180" y="228" text-anchor="middle">gate · passes · power</text></g>
+        <g class="node" id="n8"><rect x="1230" y="60" width="140" height="50" rx="18"/>
+          <text class="t" x="1300" y="82" text-anchor="middle">Confirm</text><text class="s" x="1300" y="98" text-anchor="middle">nothing sent before</text></g>
+        <g class="node" id="n9"><rect x="1230" y="320" width="140" height="50" rx="18"/>
+          <text class="t" x="1300" y="342" text-anchor="middle">Create one ticket</text><text class="s" x="1300" y="358" text-anchor="middle">n8n routes 3 parts</text></g>
+        <rect class="bar" id="fork" x="1408" y="436" width="6" height="142" rx="2"/>
+        <g class="node" id="dl"><rect x="1440" y="426" width="160" height="46" rx="16"/>
+          <text class="t" x="1520" y="445" text-anchor="middle">Logistics &amp; Site Access</text><text class="s" x="1520" y="461" text-anchor="middle">officer approves · gate L2</text></g>
+        <g class="node" id="ds"><rect x="1440" y="484" width="160" height="46" rx="16"/>
+          <text class="t" x="1520" y="503" text-anchor="middle">Accreditation &amp; Security</text><text class="s" x="1520" y="519" text-anchor="middle">officer approves · 2 passes</text></g>
+        <g class="node" id="df"><rect x="1440" y="542" width="160" height="46" rx="16"/>
+          <text class="t" x="1520" y="561" text-anchor="middle">Facilities &amp; Utilities</text><text class="s" x="1520" y="577" text-anchor="middle">officer approves · 63 A</text></g>
+        <rect class="bar" id="join" x="1624" y="436" width="6" height="142" rx="2"/>
+        <g class="node" id="n10"><rect x="1557" y="320" width="140" height="50" rx="18"/>
+          <text class="t" x="1627" y="342" text-anchor="middle">Close ticket</text><text class="s" x="1627" y="358" text-anchor="middle">status: Done</text></g>
+        <g class="node" id="n11"><rect x="1557" y="60" width="140" height="50" rx="18"/>
+          <text class="t" x="1627" y="82" text-anchor="middle">Notified once</text><text class="s" x="1627" y="98" text-anchor="middle">all desks approved</text></g>
+        <g class="node warn" id="nF"><rect x="1390" y="60" width="140" height="50" rx="18"/>
+          <text class="t" x="1460" y="82" text-anchor="middle">Fix that part only</text><text class="s" x="1460" y="98" text-anchor="middle">approved parts stay</text></g>
+        <g class="node" id="nS"><rect x="1490" y="690" width="170" height="46" rx="16"/>
+          <text class="t" x="1575" y="709" text-anchor="middle">SLA watch</text><text class="s" x="1575" y="725" text-anchor="middle">reminder · escalate · reassign</text></g>
+        <g class="node" id="n12"><rect x="1300" y="628" width="180" height="46" rx="16"/>
+          <text class="t" x="1390" y="647" text-anchor="middle">Event log → KPIs</text><text class="s" x="1390" y="663" text-anchor="middle">time · bottlenecks · first-time</text></g>
+
+        <g id="tokens"></g>
+      </svg>
+    </div>
+    <figcaption>Two sides, one ticket between them. One request, one loop at most, one ticket. The agent prepares and checks; the fork sends each desk its part at the same moment; people approve; the join closes the ticket. Dashed arrows are object flows of events, sent through n8n to desk systems, notifications and the organiser dashboard.</figcaption>
+  </figure>
+
+  <section class="player" aria-label="Walkthrough controls">
+    <div class="now" aria-live="polite">
+      <div class="count" id="count">Ready · 18 steps</div>
+      <h2 id="stepTitle">Press play to follow Scenario A</h2>
+      <p id="stepText">A token travels the diagram the way the request does, from the participant's message to the last desk approval.</p>
+    </div>
+    <div class="controls">
+      <button id="prev" type="button" aria-label="Previous step">← Back</button>
+      <button id="play" type="button" class="primary">Play</button>
+      <button id="next" type="button" aria-label="Next step">Next →</button>
+      <button id="restart" type="button">Restart</button>
+    </div>
+    <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+  </section>
+
+  <div class="below">
+    <section class="panel">
+      <h3>Steps</h3>
+      <ol class="steps" id="steps"></ol>
+    </section>
+    <section class="panel">
+      <h3>UML notation</h3>
+      <dl class="legend">
+        <div><svg viewBox="0 0 54 24" aria-hidden="true"><circle cx="12" cy="12" r="7" fill="currentColor"/><circle cx="38" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="38" cy="12" r="4.5" fill="currentColor"/></svg><div><dt>Initial · final node</dt><dd>Where a request starts and ends.</dd></div></div>
+        <div><svg viewBox="0 0 54 24" aria-hidden="true"><rect x="3" y="3" width="48" height="18" rx="8" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><div><dt>Action</dt><dd>One step done by the lane's owner.</dd></div></div>
+        <div><svg viewBox="0 0 54 24" aria-hidden="true"><polygon points="27,2 37,12 27,22 17,12" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><div><dt>Decision + [guard]</dt><dd>Branch taken when the bracketed condition holds.</dd></div></div>
+        <div><svg viewBox="0 0 54 24" aria-hidden="true"><rect x="24" y="1" width="5" height="22" rx="1" fill="currentColor"/><path d="M4 12H22M31 6H50M31 18H50" stroke="currentColor" stroke-width="1.5"/></svg><div><dt>Fork · join</dt><dd>Parallel work starts together and waits for all.</dd></div></div>
+        <div><svg viewBox="0 0 54 24" aria-hidden="true"><path d="M4 8H46" stroke="currentColor" stroke-width="1.5"/><path d="M4 18H46" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/></svg><div><dt>Control · object flow</dt><dd>Solid: next step. Dashed: an event record.</dd></div></div>
+      </dl>
+      <blockquote>“I need to bring display equipment into our pavilion tomorrow at 10 pm. Two workers will come with the truck, and the screens need extra power.”
+        <span class="ar">أحتاج إدخال معدات عرض إلى جناحنا بكرة الساعة 10 مساءً. بيجي عاملين مع الشاحنة، والشاشات تحتاج كهرباء إضافية.</span></blockquote>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const STEPS = [
+    { title: "Ask once", short: "Participant describes the need",
+      text: "A pavilion team member opens Munjiz in the Expo 2030 Riyadh app and writes one message in plain English or Arabic.",
+      edges: ["e0"], on: ["start", "n1"], paths: [[[170, 85], [205, 85]]] },
+    { title: "Extract", short: "Claude extracts structured fields",
+      text: "Claude reads the conversation and calls one tool per desk, returning JSON: cargo, vehicle, arrival time, workers and power.",
+      edges: ["e1"], on: ["n2"], paths: [[[280, 110], [280, 215], [375, 215]]] },
+    { title: "Split by desk", short: "One sub-request per desk",
+      text: "The request becomes three sub-requests. The time and the pavilion are said once and copied to every desk.",
+      edges: ["e2"], on: ["n3"], paths: [[[505, 215], [525, 215]]] },
+    { title: "Check the rules", short: "17 desk rules run in code",
+      text: "Each desk's rule file is checked in Python: notice periods, the heavy-truck night window, ID formats and power limits. The model cannot skip a rule.",
+      edges: ["e3"], on: ["n4"], paths: [[[655, 215], [675, 215]]] },
+    { title: "Check clashes between desks", short: "4 cross-desk checks run in code",
+      text: "Each part can pass its own desk and still clash with another: a truck allowed only at night while utility crews stop at 23:00, or worker passes that start after the truck. Munjiz compares the parts with each other and suggests a fix the participant accepts in one tap.",
+      edges: ["e3b"], on: ["nC"], paths: [[[805, 215], [842, 215]]] },
+    { title: "Ask once for what is missing", short: "[missing info] one follow-up",
+      text: "The plate number, the two workers' IDs and the power in kW are missing. Munjiz asks one question that covers all three desks.",
+      edges: ["e4", "e5"], on: ["d1", "n6"], paths: [[[972, 215], [1020, 215], [1020, 110]]] },
+    { title: "Answer and re-check", short: "Answer loops back to extraction",
+      text: "The participant answers in one message. The agent re-reads the whole conversation, so a later correction always wins.",
+      edges: ["e6"], on: ["n2"], paths: [[[950, 85], [470, 85], [470, 190]]] },
+    { title: "All rules pass", short: "[complete] summary shown",
+      text: "Split and checked again: all 17 desk rules and the 4 cross-desk checks pass. The summary books Logistics Gate L2 with a night slot, two contractor passes and a 63 A outlet.",
+      edges: ["e2", "e3", "e4", "e7"], on: ["d1", "n7"], paths: [[[505, 215], [1020, 215], [1115, 215]]] },
+    { title: "Participant confirms", short: "Human confirmation",
+      text: "Nothing reaches a desk before the participant taps Confirm.",
+      edges: ["e8"], on: ["n8"], paths: [[[1180, 190], [1180, 85], [1230, 85]]] },
+    { title: "One ticket", short: "Ticket MNJ-1001 created",
+      text: "One ticket is created with three linked parts: LOG-1001, SEC-1001 and FAC-1001. Munjiz sends one event to n8n.",
+      edges: ["e9"], on: ["n9"], paths: [[[1300, 110], [1300, 320]]] },
+    { title: "Fork: desks work in parallel", short: "n8n forks to three desk systems",
+      text: "n8n routes each part to that desk's own system at the same moment (gate booking GATE-1001, accreditation ACC-1001, utilities UTL-1001) and alerts the desk team. Each sees only its own part, already checked.",
+      edges: ["e10", "e11a", "e11b", "e11c"], on: ["fork", "dl", "ds", "df"],
+      paths: [[[1300, 370], [1300, 507], [1411, 507], [1411, 449], [1440, 449]],
+              [[1300, 370], [1300, 507], [1440, 507]],
+              [[1300, 370], [1300, 507], [1411, 507], [1411, 565], [1440, 565]]] },
+    { title: "SLA watch", short: "Reminder, then escalation",
+      text: "Each part's clock starts when it reaches its desk. Past the desk's target the desk gets one reminder; past the escalation target the supervisor sees it and can reassign it or decide on the desk's behalf.",
+      edges: ["s1"], on: ["nS"], paths: [[[1560, 588], [1560, 690]]] },
+    { title: "A person decides each part", short: "Desk staff approve",
+      text: "Each desk officer decides in the Expo Admin desk console, or from their own tools through n8n: approve, request a change, or reject with a reason. The agent prepares and people decide.",
+      edges: ["e12a", "e12b", "e12c"], on: ["join"],
+      paths: [[[1600, 449], [1627, 449]], [[1600, 507], [1627, 507]], [[1600, 565], [1627, 565]]] },
+    { title: "A desk sends one part back", short: "[change requested] that part only",
+      text: "If a desk asks for a change, the ticket shows Partially approved. Munjiz tells the participant the reason in the chat and asks only for that part. Parts already approved stay approved.",
+      edges: ["r1"], on: ["nF"], paths: [[[1500, 426], [1500, 110]]] },
+    { title: "Fixed part goes back", short: "v2 re-checked, same ticket",
+      text: "The participant answers in the same chat. Only that part is re-extracted, re-checked against the desk rules and the other parts, and sent to the same desk as version 2 on the same ticket.",
+      edges: ["r2", "e10"], on: ["n9"], paths: [[[1420, 110], [1420, 345], [1370, 345]]] },
+    { title: "Join: the ticket closes", short: "Join closes the ticket",
+      text: "When all three desks have approved, the ticket closes as Done.",
+      edges: ["e13"], on: ["n10"], paths: [[[1627, 436], [1627, 370]]] },
+    { title: "Participant notified", short: "One notification, done",
+      text: "The participant gets one notification in the app. One request. One ticket. Done.",
+      edges: ["e14", "e15"], on: ["n11", "end"], paths: [[[1627, 320], [1627, 85], [1723, 85]]] },
+    { title: "Organisers see the flow", short: "Events feed the dashboard",
+      text: "Every event (submitted, sent back, fixed, approved, SLA alerts, completed) goes through n8n, which updates the participant in their language and alerts desks and the supervisor. The same events feed the organiser dashboard: completion time, SLA breaches by desk and clashes caught before submission.",
+      edges: ["o1", "o2"], on: ["n12"],
+      paths: [[[1250, 370], [1250, 651], [1300, 651]], [[1697, 345], [1750, 345], [1750, 651], [1480, 651]]] },
+  ];
+
+  const NS = "http://www.w3.org/2000/svg";
+  const $ = (id) => document.getElementById(id);
+  const tokensG = $("tokens");
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const SPEED = 360, DWELL = 2300;
+  let idx = -1, playing = false, timer = null, raf = null;
+
+  // Step list (complete at rest; also a way to jump)
+  const list = $("steps");
+  STEPS.forEach((s, i) => {
+    const li = document.createElement("li");
+    li.tabIndex = 0;
+    li.innerHTML = `<div><b>${s.title}</b><span>${s.short}</span></div>`;
+    li.addEventListener("click", () => { stop(); show(i, false); });
+    li.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); stop(); show(i, false); } });
+    list.appendChild(li);
+  });
+
+  const len = (pts) => pts.slice(1).reduce((a, p, i) => a + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0);
+  function at(pts, d) {
+    for (let i = 1; i < pts.length; i++) {
+      const seg = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      if (d <= seg) { const t = seg ? d / seg : 0; return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t]; }
+      d -= seg;
+    }
+    return pts[pts.length - 1];
+  }
+  function makeTokens(n) {
+    tokensG.textContent = "";
+    return Array.from({ length: n }, () => {
+      const g = document.createElementNS(NS, "g");
+      const halo = document.createElementNS(NS, "circle"); halo.setAttribute("r", "13"); halo.setAttribute("class", "token-halo");
+      const dot = document.createElementNS(NS, "circle"); dot.setAttribute("r", "6.5"); dot.setAttribute("class", "token");
+      g.append(halo, dot); tokensG.appendChild(g); return g;
+    });
+  }
+  const place = (g, p) => g.setAttribute("transform", `translate(${p[0]} ${p[1]})`);
+
+  function paint(k) {
+    document.querySelectorAll(".edge").forEach((e) => e.classList.remove("lit"));
+    document.querySelectorAll(".node, .bar, .pseudo, .ring").forEach((n) => n.classList.remove("on", "seen"));
+    for (let i = 0; i <= k; i++) {
+      STEPS[i].edges.forEach((id) => $(id).classList.add("lit"));
+      STEPS[i].on.forEach((id) => mark(id, i === k ? "on" : "seen"));
+    }
+    [...list.children].forEach((li, i) => { li.classList.toggle("on", i === k); li.classList.toggle("done", i < k); });
+    const s = STEPS[k];
+    $("count").textContent = `Step ${k + 1} of ${STEPS.length}`;
+    $("stepTitle").textContent = s.title;
+    $("stepText").textContent = s.text;
+    $("bar").style.width = `${((k + 1) / STEPS.length) * 100}%`;
+  }
+  function mark(id, cls) {
+    const el = $(id);
+    if (!el) return;
+    if (el.tagName === "g" && !el.classList.contains("node")) el.querySelectorAll("circle").forEach((c) => c.classList.add(cls));
+    else el.classList.add(cls);
+  }
+
+  function show(k, animate) {
+    cancelAnimationFrame(raf);
+    idx = k;
+    paint(k);
+    const s = STEPS[k];
+    const toks = makeTokens(s.paths.length);
+    if (!animate || reduce) { s.paths.forEach((p, i) => place(toks[i], p[p.length - 1])); return Promise.resolve(); }
+    const lengths = s.paths.map(len);
+    const dur = Math.min(1700, Math.max(550, (Math.max(...lengths) / SPEED) * 1000));
+    const t0 = performance.now();
+    return new Promise((resolve) => {
+      const frame = (now) => {
+        const t = Math.min(1, (now - t0) / dur);
+        const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        s.paths.forEach((p, i) => place(toks[i], at(p, e * lengths[i])));
+        if (t < 1) raf = requestAnimationFrame(frame); else resolve();
+      };
+      raf = requestAnimationFrame(frame);
+    });
+  }
+
+  async function loop() {
+    if (!playing) return;
+    if (idx >= STEPS.length - 1) { stop(); $("play").textContent = "Replay"; return; }
+    await show(idx + 1, true);
+    if (!playing) return;
+    timer = setTimeout(loop, DWELL);
+  }
+  function play() {
+    if (idx >= STEPS.length - 1) idx = -1;
+    playing = true; $("play").textContent = "Pause"; loop();
+  }
+  function stop() { playing = false; clearTimeout(timer); $("play").textContent = "Play"; }
+
+  $("play").addEventListener("click", () => (playing ? stop() : play()));
+  $("next").addEventListener("click", () => { stop(); if (idx < STEPS.length - 1) show(idx + 1, true); });
+  $("prev").addEventListener("click", () => { stop(); if (idx > 0) show(idx - 1, false); });
+  $("restart").addEventListener("click", () => { stop(); idx = -1; play(); });
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("button, li")) return;
+    if (e.key === "ArrowRight") { stop(); if (idx < STEPS.length - 1) show(idx + 1, true); }
+    if (e.key === "ArrowLeft") { stop(); if (idx > 0) show(idx - 1, false); }
+    if (e.key === " ") { e.preventDefault(); playing ? stop() : play(); }
+  });
+
+  // Resting state: whole flow lit so the first frame tells the full story; play starts from step 1.
+  document.querySelectorAll(".edge").forEach((e) => e.classList.add("lit"));
+  document.querySelectorAll(".node, .bar, .pseudo, .ring").forEach((n) => n.classList.add("seen"));
+  if (!reduce) setTimeout(() => { if (idx === -1) play(); }, 1200);
+})();
+</script>

@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Expo Admin on a desk officer's phone: same device and iOS conventions as the participant phone (components/phone). */
+  :root {
+    --label: #000000; --label-2: #3C3C43; --grey: #8E8E93; --grey-2: #AEAEB2; --grey-3: #C7C7CC;
+    --sep: #E5E5EA; --grouped: #F2F2F7; --fill: #E9E9EB; --cell: #FFFFFF; --ink: #18181B;
+    --green: #059669; --amber: #B45309; --red: #DC2626; --blue: #007AFF;
+    --font: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    --font-ar: "IBM Plex Sans Arabic", "Geeza Pro", "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; font-family: var(--font); color: var(--label); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; text-align: inherit; }
+  svg.i { width: 20px; height: 20px; flex: 0 0 auto; display: block; }
+
+  #stage { display: flex; justify-content: center; padding: 14px 0 0; overflow: visible; }
+  .device { flex: 0 0 392px; width: 392px; height: 800px; border-radius: 58px; padding: 11px; background: #0A0A0A;
+    box-shadow: 0 0 0 1px #2C2C2E, 0 0 0 3px #48484A, 0 0 0 4px #1C1C1E; transform-origin: top center; position: relative; }
+  .device::before, .device::after { content: ""; position: absolute; width: 3px; background: #3A3A3C; border-radius: 2px; }
+  .device::before { left: -6px; top: 160px; height: 60px; }
+  .device::after { right: -6px; top: 200px; height: 92px; }
+  .screen { width: 100%; height: 100%; border-radius: 47px; overflow: hidden; background: var(--grouped);
+    position: relative; display: flex; flex-direction: column; }
+  .statusbar { height: 50px; flex: 0 0 50px; display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 30px 0 40px; font-weight: 600; font-size: 16px; position: relative; z-index: 6; letter-spacing: -0.01em; }
+  .island { position: absolute; left: 50%; top: 11px; transform: translateX(-50%); width: 112px; height: 32px; background: #000; border-radius: 20px; }
+  .sys { display: flex; gap: 6px; align-items: center; }
+  .sys svg { display: block; }
+  #view { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; }
+  #view::-webkit-scrollbar { width: 0; }
+
+  .page { padding: 0 0 24px; }
+  .largetitle { padding: 6px 20px 8px; }
+  .largetitle .over { font-size: 13px; color: var(--grey); font-weight: 500; margin-bottom: 2px; }
+  .largetitle h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+  .hdr { font-size: 13px; color: var(--grey); text-transform: uppercase; letter-spacing: 0.02em; padding: 22px 36px 7px;
+    display: flex; justify-content: space-between; }
+  .ftr { font-size: 13px; color: var(--grey); padding: 7px 36px 0; line-height: 1.35; }
+  .group { margin: 0 16px; background: var(--cell); border-radius: 12px; overflow: hidden; }
+  .cell { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 10px 16px; position: relative; text-align: left; }
+  .cell.top { align-items: flex-start; }
+  .cell + .cell::before { content: ""; position: absolute; top: 0; right: 0; left: 56px; height: 0.5px; background: var(--sep); }
+  .cell.flat + .cell.flat::before { left: 16px; }
+  .cell .body { flex: 1 1 auto; min-width: 0; }
+  .cell .t { font-size: 16px; line-height: 21px; letter-spacing: -0.01em; }
+  .cell .t b { font-weight: 600; }
+  .cell .s { font-size: 13px; color: var(--grey); line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell .s.wrap { white-space: normal; }
+  .cell .meta { font-size: 12px; color: var(--grey); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+  .cell .meta svg { width: 12px; height: 12px; }
+  .cell .trail { font-size: 14px; color: var(--grey); white-space: nowrap; display: flex; align-items: center; gap: 4px; align-self: center; }
+  .cell .para { font-size: 15px; line-height: 21px; color: var(--label); }
+  .cell .para b { font-weight: 600; }
+  .chev { width: 8px; height: 13px; color: var(--grey-3); flex: 0 0 8px; }
+  .sq { width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center; flex: 0 0 30px; background: var(--grouped); color: var(--label); }
+  .sq svg { width: 17px; height: 17px; }
+  .sq.ink { background: var(--ink); color: #fff; }
+  .sq.ok { background: #E7F6EF; color: var(--green); }
+  .sq.warn { background: #FEF3E2; color: var(--amber); }
+  .sq.bad { background: #FDECEC; color: var(--red); }
+  .dotnew { width: 9px; height: 9px; border-radius: 50%; background: var(--blue); flex: 0 0 9px; margin: 0 -4px 0 -6px; align-self: center; }
+  .st-approved, .st-completed, .st-ok { color: var(--green) !important; }
+  .st-pending, .st-changes_requested, .st-overdue { color: var(--amber) !important; }
+  .st-rejected, .st-escalate { color: var(--red) !important; }
+  .empty { margin: 0 16px; background: var(--cell); border-radius: 12px; padding: 22px 16px; font-size: 15px; color: var(--grey); text-align: center; line-height: 20px; }
+  .empty svg { width: 28px; height: 28px; margin: 0 auto 8px; color: var(--grey-3); }
+  .anim { animation: rise 0.3s ease-out both; }
+  .flash { animation: rise 0.3s ease-out both, flash 1.6s ease-out 0.3s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes flash { from { background: #EAF3FF; } to { background: var(--cell); } }
+
+  /* Segmented control (desk switcher) */
+  .seg { margin: 6px 16px 0; background: rgba(118, 118, 128, 0.12); border-radius: 9px; padding: 2px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  .seg button { height: 30px; border-radius: 7px; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px; color: var(--label); }
+  .seg button.on { background: #fff; font-weight: 600; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04); }
+  .seg .n { min-width: 17px; height: 17px; padding: 0 5px; border-radius: 9px; background: #FF3B30; color: #fff; font-size: 11px; font-weight: 600; display: grid; place-items: center; }
+
+  /* Navigation bar (pushed screens) */
+  .navbar { position: sticky; top: 0; z-index: 4; height: 48px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: 0 8px; background: #F9F9F9; border-bottom: 0.5px solid rgba(0, 0, 0, 0.16); box-shadow: 0 -6px 0 #F9F9F9; }
+  .navbar .back { display: flex; align-items: center; gap: 2px; font-size: 17px; height: 44px; padding: 0 6px; justify-self: start; }
+  .navbar .back svg { width: 22px; height: 22px; }
+  .navbar .mid { text-align: center; line-height: 1.15; }
+  .navbar .mid .t { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .navbar .mid .s { font-size: 11px; color: var(--grey); }
+  .hero { padding: 16px 20px 2px; }
+  .hero .p { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .hero .m { font-size: 13px; color: var(--grey); margin-top: 2px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .chip { height: 24px; padding: 0 9px; border-radius: 12px; background: #fff; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.1); }
+  .chip svg { width: 13px; height: 13px; }
+  .note { font-size: 13px; color: var(--grey); padding: 8px 16px 0; display: flex; gap: 6px; line-height: 18px; }
+  .note svg { width: 14px; height: 14px; margin-top: 2px; flex: 0 0 14px; }
+
+  /* Decision bar */
+  #dock { flex: 0 0 auto; padding: 10px 16px 10px; background: rgba(249, 249, 249, 0.96); border-top: 0.5px solid rgba(0, 0, 0, 0.16);
+    display: none; grid-template-columns: 1fr 1.3fr; gap: 10px; }
+  #dock.on { display: grid; }
+  .btn { height: 48px; border-radius: 12px; font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn svg { width: 18px; height: 18px; }
+  .btn.dark { background: var(--ink); color: #fff; }
+  .btn.soft { background: var(--fill); color: var(--label); }
+
+  /* Action sheet */
+  .scrim { position: absolute; inset: 0; z-index: 30; background: rgba(0, 0, 0, 0.32); display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 0 8px 30px; animation: fade 0.18s ease-out both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .sheet { animation: up 0.24s ease-out both; }
+  @keyframes up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .sheet .grp { background: rgba(250, 250, 250, 0.98); border-radius: 14px; overflow: hidden; }
+  .sheet .ttl { padding: 13px 16px 11px; text-align: center; font-size: 13px; color: var(--grey); line-height: 17px; }
+  .sheet .ttl b { color: var(--label-2); font-weight: 600; }
+  .sheet .sec { padding: 8px 16px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--grey); border-top: 0.5px solid var(--sep); }
+  .sheet .opt { display: block; width: 100%; padding: 13px 16px; font-size: 16px; color: var(--blue); text-align: center; border-top: 0.5px solid var(--sep); line-height: 20px; }
+  .sheet .opt.red { color: #FF3B30; }
+  .sheet .cancel { margin-top: 8px; display: block; width: 100%; height: 54px; border-radius: 14px; background: #fff; font-size: 17px; font-weight: 600; color: var(--blue); text-align: center; }
+
+  /* Tab bar */
+  .tabbar { flex: 0 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); padding: 7px 10px 26px; background: rgba(249, 249, 249, 0.94);
+    border-top: 0.5px solid rgba(0, 0, 0, 0.18); }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; font-weight: 500; color: var(--grey); }
+  .tab svg { width: 25px; height: 25px; }
+  .tab.on { color: var(--label); }
+  .tab.off { cursor: default; color: var(--grey-2); }
+  .tab .ico { position: relative; }
+  .tab .badge { position: absolute; top: -3px; right: -9px; background: #FF3B30; color: #fff; font-size: 11px; font-weight: 600;
+    min-width: 18px; height: 18px; border-radius: 9px; display: grid; place-items: center; padding: 0 5px; }
+  .homebar { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 134px; height: 5px; border-radius: 3px; background: #000; }
+
+  /* Banner notification */
+  .toast { position: absolute; top: 8px; left: 8px; right: 8px; z-index: 40; background: rgba(250, 250, 250, 0.98);
+    border-radius: 18px; padding: 11px 13px; display: flex; gap: 10px; align-items: center;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.14); transform: translateY(-140%); transition: transform 0.4s ease-out; }
+  .toast.show { transform: translateY(0); }
+  .toast .ai { width: 38px; height: 38px; border-radius: 9px; background: var(--ink); color: #fff; display: grid; place-items: center; flex: 0 0 38px; }
+  .toast .ai svg { width: 20px; height: 20px; }
+  .toast .tb { flex: 1; min-width: 0; }
+  .toast .a { display: flex; justify-content: space-between; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .toast .a span { font-size: 13px; color: var(--grey); font-weight: 400; }
+  .toast .b { font-size: 14px; color: var(--label); line-height: 19px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="device" id="device">
+    <div class="screen" id="screen">
+      <div class="statusbar">
+        <span id="clock">14:00</span>
+        <div class="island"></div>
+        <span class="sys">
+          <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1" fill="#000"/><rect x="5" y="5.5" width="3" height="6.5" rx="1" fill="#000"/><rect x="10" y="3" width="3" height="9" rx="1" fill="#000"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#000"/></svg>
+          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 11.5 5.6 9a3.4 3.4 0 0 1 4.8 0L8 11.5Zm-4.2-4.3L2.4 5.8a8 8 0 0 1 11.2 0l-1.4 1.4a6 6 0 0 0-8.4 0ZM.9 4.3-.5 2.9a12 12 0 0 1 17 0l-1.4 1.4a10 10 0 0 0-14.2 0Z" fill="#000"/></svg>
+          <svg width="27" height="13" viewBox="0 0 27 13"><rect x="0.5" y="0.5" width="22" height="12" rx="3.5" stroke="#000" opacity="0.4" fill="none"/><rect x="2" y="2" width="17" height="9" rx="2" fill="#000"/><rect x="24" y="4" width="2" height="5" rx="1" fill="#000" opacity="0.5"/></svg>
+        </span>
+      </div>
+      <div id="view"></div>
+      <div id="dock"></div>
+      <nav class="tabbar" id="tabbar"></nav>
+      <div class="homebar"></div>
+      <div id="overlay"></div>
+      <div class="toast" id="toast"><div class="ai" id="toastIcon"></div><div class="tb"><div class="a">Expo Admin<span>now</span></div><div class="b" id="toastText"></div></div></div>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const H = 800 + 50;
+  let data = null, screen = "inbox", desk = "logistics", openSub = null, sheet = false, lastKey = "";
+  let known = null, unread = new Set(), maxEvent = null, deciding = new Set(), toastTimer = null, unseenActivity = 0;
+
+  // --- Streamlit component bridge (v1 protocol) ---
+  const post = (type, extra) => window.parent.postMessage(Object.assign({ isStreamlitMessage: true, type }, extra), "*");
+  const emit = (action, sub, text) => post("streamlit:setComponentValue", {
+    value: { action, sub, text: text || "", nonce: Date.now() + Math.random() }, dataType: "json" });
+  let lastFrameH = 0;
+  function fit() {
+    let avail = 860;
+    try { avail = window.parent.innerHeight - 150; } catch (e) {}
+    const scale = Math.max(0.55, Math.min(1, avail / 850, (window.innerWidth - 16) / 400));
+    document.getElementById("device").style.transform = `scale(${scale})`;
+    document.getElementById("stage").style.height = `${H * scale}px`;
+    const h = Math.ceil(H * scale) + 4;
+    if (h !== lastFrameH) { lastFrameH = h; post("streamlit:setFrameHeight", { height: h }); }
+  }
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(document.documentElement);
+  window.addEventListener("resize", fit);
+  try { window.parent.addEventListener("resize", fit); } catch (e) {}
+
+  // --- helpers ---
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const plain = (h) => h.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+  // lucide icons (https://lucide.dev)
+  const svg = (paths, w = 1.75) => `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+  const ICONS = {
+    inbox: svg('<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'),
+    activity: svg('<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>'),
+    done: svg('<path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>'),
+    user: svg('<circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/>'),
+    back: svg('<path d="m15 18-6-6 6-6"/>', 2.4),
+    check: svg('<path d="M20 6 9 17l-5-5"/>', 2.4),
+    x: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', 2.2),
+    undo: svg('<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>', 2),
+    checkCircle: svg('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>', 2),
+    shield: svg('<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>'),
+    merge: svg('<circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/>'),
+    link: svg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
+    clock: svg('<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>', 2),
+    alert: svg('<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>', 2),
+    info: svg('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', 2),
+    refresh: svg('<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>'),
+    msg: svg('<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>'),
+    truck: svg('<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>'),
+    "id-card": svg('<path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/>'),
+    zap: svg('<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>'),
+  };
+  const CHEV = '<svg class="chev" viewBox="0 0 8 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m1.5 1.5 5 5-5 5"/></svg>';
+  const EVENT_LOOK = {
+    ticket_submitted: ["ink", "inbox"], conflicts_caught_before_submit: ["warn", "merge"], received_by_desk_system: ["", "link"],
+    approved: ["ok", "check"], changes_requested: ["warn", "undo"], rejected: ["bad", "x"], resubmitted: ["ink", "refresh"],
+    sla_reminder: ["warn", "clock"], sla_escalated: ["bad", "alert"], reassigned: ["", "user"], ticket_completed: ["ok", "checkCircle"],
+  };
+
+  const pendingOf = (d) => d.pending.filter((p) => !deciding.has(p.id));
+  const allPending = () => data.desks.flatMap((d) => pendingOf(d).map((p) => Object.assign({ desk: d }, p)));
+  const findSub = (id) => allPending().find((p) => p.id === id);
+
+  // --- incoming data ---
+  window.addEventListener("message", (ev) => {
+    if (!ev.data || ev.data.type !== "streamlit:render") return;
+    const d = ev.data.args.data;
+    if (!d) return;
+    document.getElementById("clock").textContent = d.clock;
+    fit();
+    const ids = d.desks.flatMap((x) => x.pending.map((p) => `${p.id}:${p.version}`));
+    if (known === null) known = new Set(ids);                       // first paint: nothing is "new"
+    else ids.forEach((k) => { if (!known.has(k)) { known.add(k); unread.add(k.split(":")[0]); } });
+    const stillPending = new Set(ids.map((k) => k.split(":")[0]));
+    deciding.forEach((id) => { if (!stillPending.has(id)) deciding.delete(id); });
+    const top = d.activity.length ? d.activity[0].id : 0;
+    if (maxEvent !== null) {
+      const fresh = d.activity.filter((a) => a.id > maxEvent).reverse();
+      if (screen !== "activity") unseenActivity += fresh.length;
+      const loud = fresh.filter((a) => ["ticket_submitted", "resubmitted", "ticket_completed", "sla_escalated"].includes(a.type));
+      if (loud.length) {
+        const a = loud[loud.length - 1];
+        const first = a.type === "ticket_submitted" && d.desks.find((x) => x.pending.some((p) => p.ticket === a.ticket));
+        if (first && !d.desks.find((x) => x.id === desk).pending.some((p) => p.ticket === a.ticket)) desk = first.id;
+        toast(a.type === "ticket_submitted" ? `New ticket ${a.ticket} from ${a.pavilion}. Your desk's part is checked and ready.` : a.text,
+          EVENT_LOOK[a.type][1]);
+      }
+    }
+    maxEvent = Math.max(maxEvent || 0, top);
+    data = d;
+    if (openSub && !findSub(openSub)) { openSub = null; sheet = false; if (screen === "detail") screen = "inbox"; }
+    const key = JSON.stringify([d, screen, desk, openSub, sheet, [...deciding], [...unread], unseenActivity],
+      (k, v) => (k === "ago" || k === "sla" || k === "clock" ? undefined : v));
+    if (key !== lastKey) { lastKey = key; render(); } else live();
+  });
+
+  function toast(text, icon) {
+    document.getElementById("toastIcon").innerHTML = ICONS[icon] || ICONS.inbox;
+    document.getElementById("toastText").textContent = text;
+    const el = document.getElementById("toast");
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 3200);
+  }
+
+  // Timers ("35 s ago", "1 of 120 min") tick without redrawing the screen.
+  function live() {
+    const map = {};
+    allPending().forEach((p) => { map[`${p.id}:ago`] = p.ago; map[`${p.id}:sla`] = p.sla; });
+    document.querySelectorAll("[data-live]").forEach((el) => { const v = map[el.dataset.live]; if (v) el.textContent = v; });
+  }
+
+  // --- views ---
+  function inboxView() {
+    const d = data.desks.find((x) => x.id === desk);
+    const seg = data.desks.map((x) => {
+      const n = pendingOf(x).length;
+      return `<button class="${x.id === desk ? "on" : ""}" data-desk="${x.id}">${esc(x.short)}${n ? `<span class="n">${n}</span>` : ""}</button>`;
+    }).join("");
+    const list = pendingOf(d);
+    const cells = list.map((p) => {
+      const isNew = unread.has(p.id);
+      return `<button class="cell top ${isNew ? "flash" : ""}" data-sub="${p.id}">
+        ${isNew ? '<span class="dotnew"></span>' : ""}<div class="sq">${ICONS[d.icon] || ICONS.inbox}</div>
+        <div class="body"><div class="t"><b>${esc(p.ticket)}</b> · ${esc(p.pavilion)}${p.version > 1 ? ` · v${p.version}` : ""}</div>
+          <div class="s">${esc(plain(p.summary))}</div>
+          <div class="meta st-${p.level}">${ICONS.clock}<span data-live="${p.id}:sla">${esc(p.sla)}</span>${p.ref ? ` · ${esc(p.ref)}` : ""}</div></div>
+        <span class="trail">${CHEV}</span></button>`;
+    }).join("");
+    return `<div class="page">
+      <div class="largetitle"><div class="over">Expo Admin · ${esc(d.title)}</div><h1>Inbox</h1></div>
+      <div class="seg">${seg}</div>
+      <div class="hdr"><span>Waiting for you</span><span>${list.length || ""}</span></div>
+      ${list.length ? `<div class="group">${cells}</div>`
+        : `<div class="empty">${ICONS.inbox}Nothing waiting at ${esc(d.short)}.<br>Parts land here the moment a participant confirms.</div>`}
+      <div class="ftr">Signed in as ${esc(d.officer)}. Munjiz has already checked each part against this desk's rules and the other desks' parts. You decide.</div>
+    </div>`;
+  }
+
+  function detailView() {
+    const p = findSub(openSub);
+    if (!p) return inboxView();
+    const d = p.desk;
+    const others = p.others.map((o) => `<div class="cell flat"><div class="body"><div class="t">${esc(o.title)}</div></div>
+      <span class="trail st-${o.status}">${esc(o.label)}</span></div>`).join("");
+    const notes = p.notes.map((n) => `<div class="note">${ICONS.info}<span>${esc(n)}</span></div>`).join("");
+    return `<div class="navbar"><button class="back" data-back="1">${ICONS.back}Inbox</button>
+        <div class="mid"><div class="t">${esc(p.id)}</div><div class="s">${esc(d.title)}</div></div><span></span></div>
+      <div class="page">
+        <div class="hero"><div class="p">${esc(p.pavilion)}</div>
+          <div class="m">Ticket ${esc(p.ticket)} · submitted <span data-live="${p.id}:ago">${esc(p.ago)}</span></div>
+          <div class="chips"><span class="chip st-${p.level}">${ICONS.clock}<span data-live="${p.id}:sla">${esc(p.sla)}</span></span>
+          ${p.version > 1 ? `<span class="chip">${ICONS.refresh}v${p.version} · corrected by the participant</span>` : ""}</div></div>
+        <div class="hdr">Request</div>
+        <div class="group"><div class="cell"><div class="sq">${ICONS[d.icon] || ICONS.inbox}</div><div class="body"><div class="para">${p.summary}</div></div></div></div>
+        ${notes}
+        <div class="hdr">Checked by Munjiz</div>
+        <div class="group">
+          <div class="cell"><div class="sq ${p.rules_ok ? "ok" : "bad"}">${ICONS.shield}</div><div class="body">
+            <div class="t">${p.rules_ok ? "Desk rules passed" : "Rule check fails"}</div><div class="s wrap">${esc(p.rules)}</div></div></div>
+          <div class="cell"><div class="sq ${p.clash ? "bad" : "ok"}">${ICONS.merge}</div><div class="body">
+            <div class="t">${p.clash ? "Clash with another desk" : "No clashes with other desks"}</div><div class="s wrap">${esc(p.clash || p.clash_checks)}</div></div></div>
+          ${p.ref ? `<div class="cell"><div class="sq">${ICONS.link}</div><div class="body"><div class="t">Routed by n8n</div>
+            <div class="s">Desk system ref ${esc(p.ref)}</div></div></div>` : ""}
+        </div>
+        <div class="hdr">Other desks on this ticket</div>
+        <div class="group">${others || '<div class="cell flat"><div class="body"><div class="s">Only this desk</div></div></div>'}</div>
+        <div class="hdr">Participant's words</div>
+        <div class="group"><div class="cell"><div class="sq">${ICONS.msg}</div><div class="body"><div class="para" dir="auto">${esc(p.words)}</div></div></div></div>
+      </div>`;
+  }
+
+  function activityView() {
+    const items = data.activity.map((a) => {
+      const [tone, icon] = EVENT_LOOK[a.type] || ["", "info"];
+      return `<div class="cell top"><div class="sq ${tone}">${ICONS[icon]}</div><div class="body">
+        <div class="t" style="font-size:15px;line-height:20px">${esc(a.text)}</div></div><span class="trail" style="align-self:flex-start;font-size:13px">${esc(a.at)}</span></div>`;
+    }).join("");
+    return `<div class="page"><div class="largetitle"><div class="over">Expo Admin · all desks</div><h1>Activity</h1></div>
+      <div class="hdr" style="padding-top:14px">Live</div>
+      ${items ? `<div class="group">${items}</div>` : `<div class="empty">${ICONS.activity}Nothing yet. Tickets, routing and decisions show here as they happen.</div>`}</div>`;
+  }
+
+  function decidedView() {
+    const items = data.decided.map((s) => `<div class="cell top"><div class="sq">${ICONS[s.icon] || ICONS.inbox}</div><div class="body">
+        <div class="t"><b>${esc(s.id)}</b> · ${esc(s.pavilion)}</div><div class="s">by ${esc(s.by)} · ${esc(s.ago)}${s.reason ? ` · ${esc(s.reason)}` : ""}</div></div>
+        <span class="trail st-${s.status}">${esc(s.label)}</span></div>`).join("");
+    return `<div class="page"><div class="largetitle"><div class="over">Expo Admin · all desks</div><h1>Decided</h1></div>
+      <div class="hdr" style="padding-top:14px">Recent decisions</div>
+      ${items ? `<div class="group">${items}</div>` : `<div class="empty">${ICONS.done}No decisions yet.</div>`}</div>`;
+  }
+
+  function sheetHTML() {
+    const p = findSub(openSub);
+    if (!sheet || !p) return "";
+    const change = p.reasons.filter((r) => r.outcome === "request_change");
+    const reject = p.reasons.filter((r) => r.outcome === "reject");
+    const opt = (r, red) => `<button class="opt ${red ? "red" : ""}" data-outcome="${r.outcome}" data-reason="${esc(r.text)}">${esc(r.text)}</button>`;
+    return `<div class="scrim" data-cancel="1"><div class="sheet">
+      <div class="grp"><div class="ttl"><b>Send ${esc(p.id)} back</b><br>The participant fixes this part only. Other desks' approvals stay.</div>
+        <div class="sec">Ask for a change</div>${change.map((r) => opt(r, false)).join("")}
+        <div class="sec">Reject</div>${reject.map((r) => opt(r, true)).join("")}</div>
+      <button class="cancel" data-cancel="1">Cancel</button></div></div>`;
+  }
+
+  function tabsHTML() {
+    const n = allPending().length;
+    const tab = (id, label, icon, badge) => `<button class="tab ${screen === id || (id === "inbox" && screen === "detail") ? "on" : ""}" data-tab="${id}">
+      <span class="ico">${ICONS[icon]}${badge ? `<span class="badge">${badge}</span>` : ""}</span>${label}</button>`;
+    return tab("inbox", "Inbox", "inbox", n) + tab("activity", "Activity", "activity", unseenActivity)
+      + tab("decided", "Decided", "done", 0) + `<span class="tab off"><span class="ico">${ICONS.user}</span>Account</span>`;
+  }
+
+  function render() {
+    if (!data) return;
+    const view = document.getElementById("view");
+    const same = view.dataset.screen === screen + (openSub || "");
+    const scroll = view.scrollTop;
+    view.innerHTML = screen === "detail" ? detailView() : screen === "activity" ? activityView()
+      : screen === "decided" ? decidedView() : inboxView();
+    view.dataset.screen = screen + (openSub || "");
+    view.scrollTop = same ? scroll : 0;
+    const dock = document.getElementById("dock");
+    const showDock = screen === "detail" && findSub(openSub);
+    dock.classList.toggle("on", !!showDock);
+    dock.innerHTML = showDock ? `<button class="btn soft" data-sendback="1">${ICONS.undo}Send back</button>
+      <button class="btn dark" data-approve="1">${ICONS.check}Approve</button>` : "";
+    document.getElementById("tabbar").innerHTML = tabsHTML();
+    document.getElementById("overlay").innerHTML = sheetHTML();
+  }
+
+  function decided(outcome, reason) {
+    const id = openSub;
+    deciding.add(id);
+    emit(outcome, id, reason);
+    toast(outcome === "approve" ? `${id} approved. The participant sees it now.` : `${id} sent back: ${reason}`,
+      outcome === "approve" ? "check" : outcome === "reject" ? "x" : "undo");
+    openSub = null; sheet = false; screen = "inbox";
+    render();
+  }
+
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-desk],[data-sub],[data-back],[data-tab],[data-approve],[data-sendback],[data-outcome],[data-cancel]");
+    if (!el) return;
+    if (el.dataset.outcome) return decided(el.dataset.outcome, el.dataset.reason);
+    if (el.dataset.cancel) { if (e.target.closest(".sheet") && !e.target.closest(".cancel")) return; sheet = false; return render(); }
+    if (el.dataset.desk) { desk = el.dataset.desk; return render(); }
+    if (el.dataset.sub) { openSub = el.dataset.sub; unread.delete(openSub); screen = "detail"; return render(); }
+    if (el.dataset.back) { openSub = null; screen = "inbox"; return render(); }
+    if (el.dataset.tab) {
+      screen = el.dataset.tab; openSub = null;
+      if (screen === "activity") unseenActivity = 0;
+      return render();
+    }
+    if (el.dataset.approve) return decided("approve", "");
+    if (el.dataset.sendback) { sheet = true; return render(); }
+  });
+
+  post("streamlit:componentReady", { apiVersion: 1 });
+  fit();
+})();
+</script>
+</body>
+</html>

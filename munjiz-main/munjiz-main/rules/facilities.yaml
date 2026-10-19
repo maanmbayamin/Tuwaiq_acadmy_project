@@ -1,0 +1,58 @@
+# Facilities & Utilities desk: temporary power connections to pavilions.
+# SIMULATED rules, modelled on typical World Expo participant regulations.
+desk: facilities
+icon: zap
+title: {en: Facilities & Utilities, ar: المرافق والخدمات}
+
+fields:
+  service:
+    label: {en: Service, ar: الخدمة}
+    values:
+      power_connection: {en: Extra power connection, ar: توصيلة كهرباء إضافية}
+  power_kw:
+    label: {en: Power needed, ar: القدرة المطلوبة}
+    unit: kW
+    ask: {en: "how much power the equipment needs, in kW", ar: "القدرة الكهربائية المطلوبة بالكيلوواط"}
+  needed_from:
+    label: {en: Needed from, ar: مطلوبة من}
+    type: datetime
+    ask: {en: "when the power is needed", ar: "متى تحتاج الكهرباء"}
+
+required: [power_kw, needed_from]
+
+# Desk response target. The SLA clock starts when this part (or a fixed version of it) reaches the desk.
+# After review_minutes the desk gets a reminder; after escalate_minutes it goes to the supervisor.
+sla: {review_minutes: 120, escalate_minutes: 240}
+
+checks:
+  - id: capacity_limit
+    type: max_value
+    field: power_kw
+    value: 150
+    severity: block
+    message:
+      en: "Temporary connections are limited to {value} kW. Larger loads need a capacity study."
+      ar: "التوصيلات المؤقتة محدودة بـ {value} كيلوواط، والأحمال الأكبر تحتاج دراسة سعة."
+  - id: engineer_signoff
+    type: max_value
+    field: power_kw
+    value: 50
+    severity: note
+    message:
+      en: "Above {value} kW: an electrical engineer signs off at approval."
+      ar: "فوق {value} كيلوواط: يعتمدها مهندس كهربائي عند الموافقة."
+  - id: notice
+    type: min_notice_hours
+    field: needed_from
+    hours: 12
+    severity: block
+    message:
+      en: "Power connections need at least {hours} hours' notice."
+      ar: "توصيلات الكهرباء تحتاج إشعارًا قبل {hours} ساعة على الأقل."
+
+assign:
+  - when: {power_kw: {lte: 22}}
+    set: {connection: {en: "32 A three-phase outlet", ar: "مخرج ثلاثي الطور 32 أمبير"}}
+  - when: {power_kw: {lte: 43}}
+    set: {connection: {en: "63 A three-phase outlet", ar: "مخرج ثلاثي الطور 63 أمبير"}}
+  - set: {connection: {en: "125 A temporary distribution board", ar: "لوحة توزيع مؤقتة 125 أمبير"}}

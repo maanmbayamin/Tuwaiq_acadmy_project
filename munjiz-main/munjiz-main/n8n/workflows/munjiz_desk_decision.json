@@ -1,0 +1,73 @@
+{
+  "id": "MunjizDeskDecision",
+  "name": "Munjiz · Desk decision intake",
+  "nodes": [
+    {
+      "id": "3fd970f6-fcb7-58b2-9641-e19db6d21b06",
+      "name": "Desk decision",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "desk-decision",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "928badc1-f0b8-5ebe-9e26-050ea37c3ef9"
+    },
+    {
+      "id": "1dfec620-e861-5a90-8ed6-f6af4f438a64",
+      "name": "Record decision in Munjiz",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.MUNJIZ_API_URL }}/api/subrequests/{{ $json.body.sub_id }}/decision",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Munjiz-Token",
+              "value": "={{ $env.MUNJIZ_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ decision: $json.body.decision, approve: $json.body.approve, staff: $json.body.staff, reason: $json.body.reason || '' }) }}"
+      }
+    }
+  ],
+  "connections": {
+    "Desk decision": {
+      "main": [
+        [
+          {
+            "node": "Record decision in Munjiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Riyadh"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

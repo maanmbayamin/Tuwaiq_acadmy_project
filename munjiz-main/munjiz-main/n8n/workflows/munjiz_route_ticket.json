@@ -1,0 +1,608 @@
+{
+  "id": "MunjizRouteDesks",
+  "name": "Munjiz · Route ticket to desks",
+  "nodes": [
+    {
+      "id": "a20591e5-897c-5b60-8eed-4ca0d61411d2",
+      "name": "Munjiz event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "munjiz-events",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "webhookId": "3a53f924-642e-5887-9cc7-ca55d2ecf2ec"
+    },
+    {
+      "id": "534b6694-87fa-56e7-985b-33607835275e",
+      "name": "Which event?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "2fb18c3c-2305-56d9-b8f6-3103fb1618b3",
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "ticket_submitted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ticket submitted"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "002740b2-e015-589f-8015-bcddb75440c4",
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "sub_decided",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Desk decided"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "52433064-efed-52d3-b265-9cf06343570b",
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "ticket_completed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ticket done"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "9d1914ed-c501-5d08-b001-4ef5aa562e78",
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "sub_resubmitted",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Part fixed and resent"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "6bb881cd-4cd2-5fd6-853f-47cbbc0381fc",
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "sla_reminder",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SLA reminder"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "f87bf064-eeec-5cd8-9842-efd8ff1fea22",
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "sla_escalated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SLA escalation"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "609c9dfa-4210-572f-90d5-b56ad92b51a2",
+      "name": "One item per desk part",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        140
+      ],
+      "parameters": {
+        "jsCode": "// One item per desk part, carrying the ticket fields each desk needs.\nconst body = $input.first().json.body;\nreturn body.sub_requests.map((part) => ({\n  json: { ...part, ticket_id: body.ticket_id, pavilion: body.pavilion, language: body.language },\n}));"
+      }
+    },
+    {
+      "id": "9730e98a-a937-517b-80f3-1553a819332b",
+      "name": "Which desk?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        720,
+        140
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "616ce6d4-8fc5-5045-9f6e-0c1901f0d3cf",
+                    "leftValue": "={{ $json.desk }}",
+                    "rightValue": "logistics",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Logistics & Site Access"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "a1eb6cca-9308-5040-8ba0-e50b60bad610",
+                    "leftValue": "={{ $json.desk }}",
+                    "rightValue": "security",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Accreditation & Security"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "3e8bbb15-5839-5dfd-a719-71cdb4baffc1",
+                    "leftValue": "={{ $json.desk }}",
+                    "rightValue": "facilities",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Facilities & Utilities"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "876d8cde-c2a2-57bd-8ec4-aa8626f35947",
+      "name": "Gate booking system",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.MUNJIZ_API_URL }}/mock/desks/logistics/inbox",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Munjiz-Token",
+              "value": "={{ $env.MUNJIZ_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sub_id: $json.id, ticket_id: $json.ticket_id, summary: $json.summary }) }}"
+      }
+    },
+    {
+      "id": "1af2755b-e02d-5439-9dd8-2941c5973648",
+      "name": "Accreditation system",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.MUNJIZ_API_URL }}/mock/desks/security/inbox",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Munjiz-Token",
+              "value": "={{ $env.MUNJIZ_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sub_id: $json.id, ticket_id: $json.ticket_id, summary: $json.summary }) }}"
+      }
+    },
+    {
+      "id": "425e6ed2-5d42-51d0-98e9-39c3ee89f7c8",
+      "name": "Utilities work orders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.MUNJIZ_API_URL }}/mock/desks/facilities/inbox",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Munjiz-Token",
+              "value": "={{ $env.MUNJIZ_API_TOKEN }}"
+            }
+          ]
+        },
+        "options": {},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sub_id: $json.id, ticket_id: $json.ticket_id, summary: $json.summary }) }}"
+      }
+    },
+    {
+      "id": "e24b7e60-d0b1-56eb-b0dd-3e90721a5edd",
+      "name": "Compose desk alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        140
+      ],
+      "parameters": {
+        "jsCode": "// Alert text for the desk team, with a one-click link back to Munjiz.\nconst part = $('One item per desk part').item.json;\nreturn {\n  json: {\n    desk: part.desk_title,\n    desk_ref: $json.desk_ref,\n    text: `New ${part.desk_title} request ${part.id} from ${part.pavilion} (ref ${$json.desk_ref}): ${part.summary}`,\n    decision_url: part.decision_url,\n  },\n};",
+        "mode": "runOnceForEachItem"
+      }
+    },
+    {
+      "id": "9684795f-4858-56a9-87e5-edd065c16be6",
+      "name": "Notify desk team",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1480,
+        140
+      ],
+      "parameters": {},
+      "notes": "Connect Slack, Teams or email here",
+      "notesInFlow": true
+    },
+    {
+      "id": "6b0b9fd7-ebc3-5a3b-b44f-898af2a5352e",
+      "name": "Compose participant update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        440
+      ],
+      "parameters": {
+        "jsCode": "// Update for the participant, in the language they wrote in.\nconst b = $input.first().json.body;\nconst desks = { logistics: 'Logistics & Site Access', security: 'Accreditation & Security', facilities: 'Facilities & Utilities' };\nconst desksAr = { logistics: 'اللوجستيات ودخول الموقع', security: 'الاعتماد والأمن', facilities: 'المرافق والخدمات' };\nconst ar = b.language === 'ar';\nlet text;\nif (b.event === 'ticket_completed') {\n  text = ar ? `طلبك ${b.ticket_id} منجز. وافقت جميع الجهات.`\n            : `Your request ${b.ticket_id} is done. All desks approved in ${b.minutes_to_complete} min.`;\n} else if (b.status === 'approved') {\n  text = ar ? `${desksAr[b.desk]} وافقت على جزء من طلبك ${b.ticket_id}.` : `${desks[b.desk]} approved its part of ${b.ticket_id}.`;\n} else if (b.status === 'changes_requested') {\n  text = ar ? `${desksAr[b.desk]} تطلب تعديل جزئها من ${b.ticket_id}: ${b.reason}. افتح منجز وأرسل التصحيح لهذا الجزء فقط.`\n            : `${desks[b.desk]} asks for a change to its part of ${b.ticket_id}: ${b.reason}. Open Munjiz and fix that part only.`;\n} else {\n  text = ar ? `${desksAr[b.desk]} تحتاج تعديلًا على ${b.ticket_id}: ${b.reason}` : `${desks[b.desk]} needs a change on ${b.ticket_id}: ${b.reason}`;\n}\nreturn [{ json: { to: b.pavilion, ticket_id: b.ticket_id, channel: 'Expo app push', text } }];"
+      }
+    },
+    {
+      "id": "b0de4d17-132a-58e4-b816-8920ea2f3072",
+      "name": "Send to participant",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        440
+      ],
+      "parameters": {},
+      "notes": "Connect Expo app push or WhatsApp here",
+      "notesInFlow": true
+    },
+    {
+      "id": "341fbdc7-994f-5b07-9ace-715c04ee29fc",
+      "name": "Compose SLA alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        620
+      ],
+      "parameters": {
+        "jsCode": "// SLA alert: a reminder goes to the desk, an escalation goes to the supervisor.\nconst b = $input.first().json.body;\nconst desks = { logistics: 'Logistics & Site Access', security: 'Accreditation & Security', facilities: 'Facilities & Utilities' };\nconst escalated = b.event === 'sla_escalated';\nreturn [{ json: {\n  to: escalated ? 'Participant services supervisor' : `${desks[b.desk]} desk`,\n  sub_id: b.id, ticket_id: b.ticket_id,\n  text: escalated\n    ? `Escalated: ${b.id} for ${b.pavilion} has waited ${b.waiting_minutes} min at ${desks[b.desk]} (escalation target ${b.escalate_minutes} min).`\n    : `Reminder: ${b.id} for ${b.pavilion} has waited ${b.waiting_minutes} min (target ${b.review_minutes} min). Please review.`,\n} }];"
+      }
+    },
+    {
+      "id": "dce5dcff-65a7-5289-9767-82fb4b544db6",
+      "name": "Alert desk or supervisor",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        620
+      ],
+      "parameters": {},
+      "notes": "Connect Slack, Teams or email here",
+      "notesInFlow": true
+    }
+  ],
+  "connections": {
+    "Munjiz event": {
+      "main": [
+        [
+          {
+            "node": "Which event?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Which event?": {
+      "main": [
+        [
+          {
+            "node": "One item per desk part",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Compose participant update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Compose participant update",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "One item per desk part",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Compose SLA alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Compose SLA alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One item per desk part": {
+      "main": [
+        [
+          {
+            "node": "Which desk?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Which desk?": {
+      "main": [
+        [
+          {
+            "node": "Gate booking system",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Accreditation system",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Utilities work orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gate booking system": {
+      "main": [
+        [
+          {
+            "node": "Compose desk alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accreditation system": {
+      "main": [
+        [
+          {
+            "node": "Compose desk alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Utilities work orders": {
+      "main": [
+        [
+          {
+            "node": "Compose desk alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose desk alert": {
+      "main": [
+        [
+          {
+            "node": "Notify desk team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose participant update": {
+      "main": [
+        [
+          {
+            "node": "Send to participant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose SLA alert": {
+      "main": [
+        [
+          {
+            "node": "Alert desk or supervisor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Riyadh"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

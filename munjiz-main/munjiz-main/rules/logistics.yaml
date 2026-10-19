@@ -1,0 +1,68 @@
+# Logistics & Site Access desk: gate slots and delivery routes on the Expo 2030 Riyadh site.
+# SIMULATED rules, modelled on typical World Expo participant regulations. Replace with the official
+# Special Regulations when available. Checked by code (munjiz/rules.py), never by the LLM.
+desk: logistics
+icon: truck
+title: {en: Logistics & Site Access, ar: اللوجستيات ودخول الموقع}
+
+fields:
+  cargo_description:
+    label: {en: Cargo, ar: الحمولة}
+    ask: {en: "what you're delivering", ar: "وصف الحمولة"}
+  vehicle_type:
+    label: {en: Vehicle, ar: نوع المركبة}
+    ask: {en: "the vehicle type (van, light truck or heavy truck)", ar: "نوع المركبة (فان، شاحنة خفيفة، شاحنة كبيرة)"}
+    values:
+      van: {en: Van, ar: فان}
+      light_truck: {en: Light truck, ar: شاحنة خفيفة}
+      heavy_truck: {en: Heavy truck, ar: شاحنة كبيرة}
+  vehicle_plate:
+    label: {en: Plate number, ar: رقم اللوحة}
+    ask: {en: "the truck's plate number", ar: "رقم لوحة الشاحنة"}
+  arrival_datetime:
+    label: {en: Arrival, ar: وقت الوصول}
+    type: datetime
+    ask: {en: "the arrival date and time", ar: "تاريخ ووقت الوصول"}
+
+required: [cargo_description, vehicle_type, vehicle_plate, arrival_datetime]
+
+# Desk response target. The SLA clock starts when this part (or a fixed version of it) reaches the desk.
+# After review_minutes the desk gets a reminder; after escalate_minutes it goes to the supervisor.
+sla: {review_minutes: 120, escalate_minutes: 240}
+
+checks:
+  - id: notice
+    type: min_notice_hours
+    field: arrival_datetime
+    hours: 12
+    severity: block
+    message:
+      en: "Gate slots must be booked at least {hours} hours ahead."
+      ar: "يجب حجز موعد البوابة قبل {hours} ساعة على الأقل."
+  - id: heavy_vehicle_window
+    type: time_window
+    field: arrival_datetime
+    when: {vehicle_type: heavy_truck, phase: operations}
+    start: "22:00"
+    end: "06:00"
+    severity: block
+    message:
+      en: "While the Expo is open to visitors, heavy trucks may enter only between {start} and {end}."
+      ar: "خلال فترة استقبال الزوار، يُسمح بدخول الشاحنات الكبيرة بين {start} و{end} فقط."
+
+# First matching rule wins.
+assign:
+  - when: {vehicle_type: heavy_truck}
+    set:
+      gate: {en: Logistics Gate L2, ar: بوابة اللوجستيات L2}
+      route: {en: "Service ring road → Loading Bay 7", ar: "طريق الخدمات الدائري ← رصيف التحميل 7"}
+      slot_minutes: 60
+  - when: {vehicle_type: light_truck}
+    set:
+      gate: {en: Logistics Gate L1, ar: بوابة اللوجستيات L1}
+      route: {en: "Service ring road → Loading Bay 3", ar: "طريق الخدمات الدائري ← رصيف التحميل 3"}
+      slot_minutes: 45
+  - set:
+      gate: {en: Logistics Gate L1, ar: بوابة اللوجستيات L1}
+      route: {en: "Service ring road → Pavilion drop-off zone", ar: "طريق الخدمات الدائري ← منطقة التنزيل عند الجناح"}
+      slot_minutes: 30
