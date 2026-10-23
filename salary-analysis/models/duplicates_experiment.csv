@@ -1,0 +1,5 @@
+model,training data,MAE,RMSE,R2
+Gradient Boosting,Drop duplicates,41314.198,60212.057,0.312
+Gradient Boosting,Keep duplicates,41402.796,60387.73,0.307
+Linear Regression,Drop duplicates,41562.284,60576.646,0.303
+Linear Regression,Keep duplicates,41491.246,60523.312,0.304

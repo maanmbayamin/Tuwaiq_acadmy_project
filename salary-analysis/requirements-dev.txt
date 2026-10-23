@@ -1,0 +1,6 @@
+# Everything in requirements.txt, plus the tools to open and rerun the notebook and run the tests.
+-r requirements.txt
+jupyterlab==4.6.4
+ipykernel==7.4.0
+nbconvert==7.17.2
+pytest==9.1.1
