@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data & AI Salaries</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1419;
+    --surface: #151b22;
+    --surface-2: #1b232c;
+    --line: #26303a;
+    --text: #e6eaee;
+    --text-2: #a7b1bb;
+    --muted: #6f7b87;
+    --accent: #2fa37f;      /* Saudi / main series */
+    --accent-soft: rgba(47, 163, 127, 0.14);
+    --blue: #3987e5;
+    --amber: #c98500;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Deck ---------- */
+  .deck { position: relative; height: 100vh; width: 100vw; }
+  .slide {
+    position: absolute; inset: 0;
+    padding: 56px 72px 96px;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transform: translateY(14px);
+    transition: opacity .45s ease, transform .45s ease;
+    overflow-y: auto;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; transform: none; }
+  .inner { max-width: 1180px; width: 100%; margin: auto; display: flex; flex-direction: column; }
+  .split { grid-template-columns: 1.6fr 1fr; align-items: start; }
+
+  .eyebrow { color: var(--accent); font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 14px; }
+  h1 { font-size: clamp(36px, 5.2vw, 64px); line-height: 1.05; font-weight: 700; letter-spacing: -.02em; }
+  h2 { font-size: clamp(26px, 3.2vw, 38px); line-height: 1.15; font-weight: 700; letter-spacing: -.01em; margin-bottom: 10px; }
+  .lead { color: var(--text-2); font-size: clamp(16px, 1.5vw, 19px); line-height: 1.55; max-width: 760px; }
+  .small { color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+  .grid { display: grid; gap: 18px; }
+  .g2 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .card h3 { font-size: 17.5px; font-weight: 600; margin-bottom: 6px; }
+  .card p { color: var(--text-2); font-size: 15.5px; line-height: 1.6; }
+  .stat .num { font-size: clamp(28px, 3vw, 40px); font-weight: 700; letter-spacing: -.02em; }
+  .stat .lbl { color: var(--text-2); font-size: 13.5px; margin-top: 4px; }
+  .mt { margin-top: 28px; }
+  .mt-s { margin-top: 14px; }
+
+  /* ---------- Controls ---------- */
+  .tabs { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px; gap: 2px; flex-wrap: wrap; }
+  .tabs button {
+    background: none; border: 0; color: var(--text-2); font: inherit; font-size: 14px;
+    padding: 8px 14px; border-radius: 7px; cursor: pointer; transition: background .2s, color .2s;
+  }
+  .tabs button:hover { color: var(--text); }
+  .tabs button.on { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1px rgba(47,163,127,.45); }
+  .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+  /* ---------- Charts ---------- */
+  .chart { width: 100%; }
+  .chart svg { display: block; width: 100%; overflow: visible; }
+  .chart text { font-family: inherit; }
+  .bar { transition: opacity .2s; }
+  .bar:hover { opacity: .8; }
+  .caption { color: var(--text-2); font-size: 14.5px; line-height: 1.5; margin-top: 10px; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--text-2); margin-bottom: 6px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .tip {
+    position: fixed; pointer-events: none; background: #0b0f13; border: 1px solid var(--line);
+    color: var(--text); font-size: 13px; padding: 8px 10px; border-radius: 8px; line-height: 1.45;
+    opacity: 0; transition: opacity .12s; z-index: 50; white-space: nowrap;
+  }
+
+  /* ---------- Flow (cleaning & model) ---------- */
+  .flow { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+  .step {
+    flex: 1; min-width: 150px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px; cursor: pointer; transition: border-color .2s, background .2s;
+    text-align: left; color: inherit; font: inherit;
+  }
+  .step:hover { border-color: #3a4651; }
+  .step.on { border-color: var(--accent); background: #17221f; }
+  .step .n { color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: .1em; }
+  .step .t { font-weight: 600; font-size: 15px; margin-top: 6px; }
+  .arrow { align-self: center; color: var(--muted); padding: 0 8px; font-size: 18px; }
+  .detail { min-height: 150px; }
+  .ba { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .ba .box { background: var(--surface-2); border-radius: 10px; padding: 14px 18px; min-width: 150px; }
+  .ba .box .k { color: var(--text-2); font-size: 12.5px; }
+  .ba .box .v { font-size: 26px; font-weight: 700; margin-top: 2px; }
+  .ba .to { color: var(--accent); font-size: 22px; }
+  .chip { display: inline-block; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; font-size: 13px; color: var(--text-2); margin: 3px 4px 3px 0; }
+  .chip b { color: var(--text); font-weight: 500; }
+
+  /* ---------- Tools ---------- */
+  .tool { display: flex; gap: 14px; align-items: flex-start; }
+  .tool .ic {
+    flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--surface-2);
+    display: grid; place-items: center; color: var(--accent);
+  }
+  .tool .ic svg { width: 20px; height: 20px; }
+  .stage { color: var(--muted); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+
+  /* ---------- Title slide ---------- */
+  .hero { justify-content: center; }
+  .hero h1 span { color: var(--accent); }
+  .glow-2 { right: auto; top: auto; left: -200px; bottom: -220px; opacity: .6; }
+  .presenter { margin-top: 56px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .presenter::before { content: ""; width: 48px; height: 2px; background: var(--accent); border-radius: 2px; margin-bottom: 14px; }
+  .presenter .by { color: var(--muted); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
+  .presenter .name { font-size: clamp(22px, 2.4vw, 30px); font-weight: 600; letter-spacing: -.01em; }
+  .glow {
+    position: absolute; width: 620px; height: 620px; right: -160px; top: -140px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(47,163,127,.16), transparent 65%); pointer-events: none;
+  }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 64px; display: flex; align-items: center;
+    justify-content: space-between; padding: 0 28px; background: linear-gradient(transparent, rgba(15,20,25,.92) 40%);
+    z-index: 20;
+  }
+  .dots { display: flex; gap: 8px; }
+  .dots button { width: 9px; height: 9px; border-radius: 50%; border: 0; background: #33404c; cursor: pointer; padding: 0; transition: background .2s, width .2s; }
+  .dots button.on { background: var(--accent); width: 26px; border-radius: 6px; }
+  .navbtns { display: flex; gap: 8px; align-items: center; }
+  .navbtns button {
+    width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface);
+    color: var(--text); cursor: pointer; font-size: 18px; display: grid; place-items: center;
+  }
+  .navbtns button:hover { border-color: #3a4651; }
+  .navbtns button:disabled { opacity: .35; cursor: default; }
+  .count { color: var(--muted); font-size: 13px; min-width: 44px; text-align: center; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: var(--accent); transition: width .45s ease; z-index: 30; }
+
+  @media (max-width: 860px) {
+    .slide { padding: 32px 16px 96px; }
+    .g2, .g3, .g4 { grid-template-columns: 1fr 1fr; }
+    .split { grid-template-columns: 1fr; }
+    .arrow { display: none; }
+    .flow { gap: 8px; }
+    .step { min-width: 46%; }
+    .nav { padding: 0 16px; }
+  }
+  @media (max-width: 520px) {
+    .g2, .g3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="tip" id="tip"></div>
+
+<main class="deck" id="deck">
+
+  <!-- 0. Cover -->
+  <section class="slide hero cover">
+    <div class="glow"></div>
+    <div class="glow glow-2"></div>
+    <div class="inner" style="align-items:center; text-align:center">
+      <div class="eyebrow">Data analysis &amp; machine learning project</div>
+      <h1 style="font-size: clamp(44px, 7vw, 92px)">Data &amp; AI <span>Salaries</span></h1>
+      <p class="lead mt-s" style="margin-left:auto; margin-right:auto">What drives pay in data and AI jobs, and where Saudi Arabia stands</p>
+      <div class="presenter">
+        <div class="by">Presented by</div>
+        <div class="name">Maan Bayamin</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1. Title -->
+  <section class="slide hero">
+    <div class="glow"></div>
+    <div class="inner" style="justify-content:center">
+      <div class="eyebrow">Data analysis &amp; machine learning project</div>
+      <h1>Data &amp; AI Salaries:<br><span>what drives pay</span> and where Saudi Arabia stands</h1>
+      <p class="lead mt-s">We cleaned and explored almost 14,000 real salaries, compared Saudi Arabia with the world, and built a model that estimates a salary for any data or AI role.</p>
+      <div class="grid g4 mt">
+        <div class="card stat"><div class="num">13,972</div><div class="lbl">salary records</div></div>
+        <div class="card stat"><div class="num">77</div><div class="lbl">countries</div></div>
+        <div class="card stat"><div class="num">$142K</div><div class="lbl">median yearly salary</div></div>
+        <div class="card stat"><div class="num">6</div><div class="lbl">app pages</div></div>
+      </div>
+      <p class="small mt">Press Space or the arrow keys to move forward. Slides with steps play them one by one first.</p>
+    </div>
+  </section>
+
+  <!-- 2. Question and data -->
+  <section class="slide">
+    <div class="inner">
+      <div class="eyebrow">01 · The question</div>
+      <h2>How much does a data or AI job pay, and why?</h2>
+      <p class="lead">Our target is <b>salary in USD per year</b>. We used two datasets: one big global file, and a small Saudi file to fill a gap.</p>
+      <div class="grid g2 mt">
+        <div class="card">
+          <h3>Global salaries</h3>
+          <p>13,972 records from 2020 to 2024. Each row has the job title, experience level, country, work setting, company size and salary.</p>
+          <div class="chart mt-s" id="c-us"></div>
+          <p class="caption">Most records come from US companies, so a "global" average mostly describes the US market.</p>
+        </div>
+        <div class="card">
+          <h3>Saudi benchmark</h3>
+          <p>The global file has only <b>2 rows</b> from Saudi Arabia. Too few to say anything. So we collected <b>11 salary ranges</b> from recruiters and salary websites.</p>
+          <div class="mt-s">
+            <span class="chip"><b>Robert Walters</b> 6 roles</span>
+            <span class="chip"><b>Levels.fyi</b></span>
+            <span class="chip"><b>Glassdoor</b></span>
+            <span class="chip"><b>Paylab</b></span>
+            <span class="chip"><b>ZenHR</b></span>
+            <span class="chip"><b>PayScale</b></span>
+          </div>
+          <p class="caption">These are monthly SAR values. We converted them with the fixed rate 1 USD = 3.75 SAR, and used them for comparison only, not for training.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Cleaning -->
+  <section class="slide">
+    <div class="inner">
+      <div class="eyebrow">02 · Cleaning</div>
+      <h2>Making the data trustworthy</h2>
+      <p class="lead">Click each step to see what changed.</p>
+      <div class="flow mt" id="clean-steps"></div>
+      <div class="card mt detail" id="clean-detail"></div>
+    </div>
+  </section>
+
+  <!-- 4. Drivers -->
+  <section class="slide">
+    <div class="inner">
+      <div class="eyebrow">03 · What we found</div>
+      <h2>What drives a salary?</h2>
+      <div class="controls mt-s"><div class="tabs" id="drv-tabs"></div></div>
+      <div class="grid split mt" id="drv-grid">
+        <div class="card"><div class="chart" id="c-drv"></div></div>
+        <div class="card"><h3 id="drv-title"></h3><p id="drv-text"></p></div>
+      </div>
+      <p class="small mt-s">Median yearly salary in USD. Hover over a bar to see the exact value.</p>
+    </div>
+  </section>
+
+  <!-- 5. Saudi -->
+  <section class="slide">
+    <div class="inner">
+      <div class="eyebrow">04 · Saudi Arabia vs the world</div>
+      <h2>Same role, different markets</h2>
+      <div class="controls mt-s">
+        <div class="tabs" id="ksa-kind"></div>
+        <div class="tabs" id="ksa-cur"></div>
+      </div>
+      <div class="grid split mt" id="ksa-grid">
+        <div class="card">
+          <div class="legend">
+            <span><i style="background:var(--accent)"></i>Saudi Arabia</span>
+            <span><i style="background:var(--blue)"></i>Global excl. US</span>
+            <span><i style="background:var(--amber)"></i>United States</span>
+          </div>
+          <div class="chart" id="c-ksa"></div>
+        </div>
+        <div class="card"><h3 id="ksa-title"></h3><p id="ksa-text"></p></div>
+      </div>
+      <p class="small mt-s">Saudi values: median of the benchmark sources. Saudi salaries are usually tax-free and often come with housing and transport allowances, so the real gap is smaller than it looks.</p>
+    </div>
+  </section>
+
+  <!-- 6. Model -->
+  <section class="slide">
+    <div class="inner">
+      <div class="eyebrow">05 · The prediction model</div>
+      <h2>From a job profile to a salary estimate</h2>
+      <div class="flow mt-s" id="model-flow"></div>
+      <div class="grid g2 mt" style="align-items:start">
+        <div class="card">
+          <div class="controls" style="justify-content:space-between">
+            <h3 style="margin:0" id="m-title">4 models compared</h3>
+            <div class="tabs" id="m-tabs"></div>
+          </div>
+          <div class="chart mt-s" id="c-model"></div>
+          <p class="caption" id="m-cap"></p>
+        </div>
+        <div>
+          <div class="grid g2">
+            <div class="card stat"><div class="num">0.40</div><div class="lbl">R² on unseen data</div></div>
+            <div class="card stat"><div class="num">$38K</div><div class="lbl">average error (MAE)</div></div>
+          </div>
+          <div class="card mt-s">
+            <h3>Why not more accurate?</h3>
+            <p>The data has no skills, company name, city or years of experience. Two people with the same profile can earn very different amounts, so the app always shows a <b>likely range</b>. The real salary falls inside it about <b>8 times out of 10</b>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Tools -->
+  <section class="slide">
+    <div class="inner">
+      <div class="eyebrow">06 · Tools</div>
+      <h2>What we built it with</h2>
+      <p class="lead">Every tool is free and open source.</p>
+      <div class="grid g4 mt" id="tools"></div>
+    </div>
+  </section>
+
+  <!-- 8. Takeaways -->
+  <section class="slide">
+    <div class="inner">
+      <div class="eyebrow">07 · Takeaways</div>
+      <h2>What to remember</h2>
+      <div class="grid g3 mt">
+        <div class="card"><h3>Experience and country lead</h3><p>An executive earns about 2.3x an entry-level employee. A US company pays about 5x an Indian company for similar work.</p></div>
+        <div class="card"><h3>ML, AI and research pay most</h3><p>Around $175K median, against about $109K for analytics and BI roles.</p></div>
+        <div class="card"><h3>Remote does not mean less</h3><p>On-site and fully remote jobs have almost the same median salary.</p></div>
+        <div class="card"><h3>Saudi: two stories</h3><p>Analysts and data scientists earn below the US but close to Europe. Senior data leaders are paid above the global median.</p></div>
+        <div class="card"><h3>Estimates are ranges</h3><p>The model gives a typical salary and a likely range. Useful to start a conversation, not to replace an offer.</p></div>
+        <div class="card"><h3>Limits</h3><p>The data is 87% US, Saudi numbers come from outside sources, and skills or company details are missing.</p></div>
+      </div>
+      <div class="card mt" style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; border-color:rgba(47,163,127,.45)">
+        <div><h3 style="margin:0">Try it yourself</h3><p>The Streamlit app has 6 pages: overview, data, explore, Saudi comparison, model, and a salary estimator.</p></div>
+        <span class="chip"><b>Thank you</b></span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="nav">
+  <div class="dots" id="dots"></div>
+  <div class="navbtns">
+    <button id="prev" aria-label="Previous slide">&#8249;</button>
+    <span class="count" id="count"></span>
+    <button id="next" aria-label="Next slide">&#8250;</button>
+  </div>
+</nav>
+
+<script>
+/* ================= Data (from the notebook outputs) ================= */
+const SAR = v => v * 3.75 / 12;
+const fmtUSD = v => "$" + Math.round(v / 1000) + "K";
+const fmtSAR = v => (Math.round(SAR(v) / 100) / 10).toFixed(1) + "K SAR";
+
+const DRIVERS = {
+  "Experience": {
+    data: [["Entry", 82000], ["Mid", 113250], ["Senior", 155000], ["Executive", 190000]],
+    title: "Experience is the biggest step",
+    text: "Pay rises at every level. An executive earns about 2.3 times the salary of an entry-level employee."
+  },
+  "Country": {
+    data: [["United States", 148775], ["Canada", 140000], ["Australia", 106200], ["United Kingdom", 81250],
+           ["Germany", 76833], ["France", 64781], ["Spain", 48585], ["India", 30476]],
+    title: "Location changes everything",
+    text: "The same kind of job pays several times more in a US or Canadian company than in Spain or India. Countries with at least 30 records."
+  },
+  "Job family": {
+    data: [["ML & AI", 178100], ["Research", 175500], ["Data Science", 150000], ["Data Engineering", 140000],
+           ["Leadership", 140000], ["Analytics & BI", 109000], ["Data Management", 85000]],
+    title: "Building models pays more than reporting",
+    text: "Machine learning, AI and research roles sit at the top. Analytics, BI and data management are at the bottom."
+  },
+  "Work setting": {
+    data: [["On-site", 144000], ["Remote", 140250], ["Hybrid", 65666]],
+    title: "Remote work is not a pay cut",
+    text: "On-site and remote are almost equal. Hybrid looks low, but it is under 2% of the data and mostly outside the US."
+  }
+};
+
+const KSA = {
+  "Individual roles": {
+    rows: [["Data Analyst", 72000, 64416, 106800], ["Data Scientist", 75577, 77777, 156400], ["Data Engineer", 28800, 79976, 145180]],
+    title: "Close to Europe, below the US",
+    text: "A Saudi data scientist earns about the same as the global level outside the US, and about half of the US. The Data Engineer value comes from one source only (PayScale), so it is the least reliable."
+  },
+  "Leadership roles": {
+    rows: [["Head of AI", 320000, 125948, 170000], ["Head of ML", 304000, 125948, 170000],
+           ["Chief Data Officer", 272000, 125948, 170000], ["Head of Analytics", 224000, 125948, 170000]],
+    title: "Saudi Arabia pays well for leaders",
+    text: "Senior data leaders in Saudi Arabia are paid above the global and US medians. These numbers come from one recruiter survey of top roles in large companies, so read them as a strong signal, not an exact gap."
+  }
+};
+
+const MODELS = {
+  "Accuracy": {
+    data: [["Gradient Boosting", 0.379], ["Ridge Regression", 0.376], ["Linear Regression", 0.375], ["Random Forest", 0.358]],
+    fmt: v => v.toFixed(3), title: "4 models compared",
+    cap: "R² from 5-fold cross-validation (share of salary differences explained). Gradient Boosting wins, but all four are close: the limit is the data, not the algorithm."
+  },
+  "What matters": {
+    data: [["Country", 0.230], ["Experience", 0.180], ["Job family", 0.142], ["Job title", 0.046],
+           ["Year", 0.007], ["Work setting", 0.006], ["Company size", 0.004]],
+    fmt: v => v.toFixed(3), title: "What the model relies on",
+    cap: "How much the model gets worse when we shuffle each input. Country and experience matter most, company size barely matters."
+  }
+};
+
+const CLEAN = [
+  { t: "Duplicates", html: `
+      <h3>38% of rows were exact copies</h3>
+      <p>5,378 rows had the same values as another row, only with a different ID. Most were US companies paying the same fixed salary for the same job (one Applied Scientist profile appears 54 times).</p>
+      <div class="ba mt-s"><div class="box"><div class="k">rows</div><div class="v">13,972</div></div><div class="to">&#8594;</div><div class="box"><div class="k">unique rows</div><div class="v">8,486</div></div></div>
+      <p class="caption">Decision: keep them in the charts (they may be real people), remove them before training the model.</p>` },
+  { t: "Job titles", html: `
+      <h3>Same job, many names</h3>
+      <p>We merged titles that mean the same thing, then grouped all titles into 7 job families.</p>
+      <div class="mt-s"><span class="chip">ML Engineer &#8594; <b>Machine Learning Engineer</b></span><span class="chip">BI Analyst &#8594; <b>Business Intelligence Analyst</b></span><span class="chip">Data Science &#8594; <b>Data Scientist</b></span><span class="chip">AI Developer &#8594; <b>AI Engineer</b></span></div>
+      <div class="ba mt-s"><div class="box"><div class="k">job titles</div><div class="v">146</div></div><div class="to">&#8594;</div><div class="box"><div class="k">after merging</div><div class="v">120</div></div><div class="to">&#8594;</div><div class="box"><div class="k">job families</div><div class="v">7</div></div></div>` },
+  { t: "Readable labels", html: `
+      <h3>Codes into words</h3>
+      <p>Short codes were replaced so every chart reads clearly.</p>
+      <div class="mt-s"><span class="chip">SE &#8594; <b>Senior</b></span><span class="chip">FT &#8594; <b>Full-time</b></span><span class="chip">100 &#8594; <b>Remote</b></span><span class="chip">M &#8594; <b>Medium</b></span><span class="chip">US &#8594; <b>United States</b></span></div>
+      <p class="caption">We also added the salary in SAR per month next to USD per year.</p>` },
+  { t: "Leakage", html: `
+      <h3>No peeking at the answer</h3>
+      <p>The columns <b>salary</b> and <b>salary_currency</b> were removed from the model inputs. The target (salary in USD) is calculated directly from them, so using them would be cheating.</p>
+      <p class="caption">We also skipped employment type (99.6% full-time) and employee country (almost always the same as the company country).</p>` },
+  { t: "Outliers", html: `
+      <h3>Very high salaries</h3>
+      <p>Using the IQR rule, salaries above about $310K were flagged (1.8% of rows). They are real, so they stay in the charts, but they are removed for training so they do not pull the model.</p>
+      <div class="ba mt-s"><div class="box"><div class="k">unique rows</div><div class="v">8,486</div></div><div class="to">&#8594;</div><div class="box"><div class="k">rows used by the model</div><div class="v">8,333</div></div></div>` }
+];
+
+const FLOW = [
+  ["Profile", "title, level, country, setting, size, year"],
+  ["Encode", "turn each choice into 0/1 columns"],
+  ["Gradient Boosting", "many small decision trees, each fixing the last"],
+  ["Estimate + range", "typical salary and a likely low to high"]
+];
+
+const ICONS = {
+  code: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></svg>',
+  table: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  brain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="M8 6h8M7 8l4 8M17 8l-4 8"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>',
+  hover: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>',
+  app: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>',
+  cloud: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 0 1-.6-8A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/></svg>'
+};
+const TOOLS = [
+  ["Analyze", "code", "Python", "The language for everything: cleaning, analysis, model and app."],
+  ["Analyze", "table", "pandas", "Loading the CSV files, cleaning, merging titles, finding duplicates."],
+  ["Analyze", "book", "Jupyter Notebook", "Step-by-step analysis with code, charts and notes together."],
+  ["Analyze", "chart", "seaborn & matplotlib", "The charts inside the notebook."],
+  ["Model", "brain", "scikit-learn", "Encoding, cross-validation, the 4 models and their scores."],
+  ["App", "hover", "Plotly", "Interactive charts in the app: hover, zoom, filter."],
+  ["App", "app", "Streamlit", "Turning Python into a 6-page web app with filters and an estimator."],
+  ["Share", "cloud", "GitHub + Streamlit Cloud", "Hosting the code and publishing the app as a free public link."]
+];
+
+/* ================= Tooltip ================= */
+const tip = document.getElementById("tip");
+function showTip(e, html) {
+  tip.innerHTML = html; tip.style.opacity = 1;
+  const x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 10);
+  tip.style.left = x + "px"; tip.style.top = (e.clientY - tip.offsetHeight - 12) + "px";
+}
+function hideTip() { tip.style.opacity = 0; }
+
+/* ================= Simple SVG horizontal bar chart ================= */
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent) {
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+
+/* rows: [{label, values:[...]}], colors: one per value; fmt: value -> text */
+function hbar(container, rows, colors, fmt, names, pad) {
+  const W = container.clientWidth || 600;
+  const narrow = W < 420;
+  const labelW = Math.min(165, W * (narrow ? 0.38 : 0.3));
+  const fs = narrow ? 12 : 14;
+  const series = colors.length;
+  const barH = series > 1 ? (narrow ? 13 : 17) : (narrow ? 22 : 30), gap = 2, groupGap = series > 1 ? 22 : 12;
+  const groupH = series * barH + (series - 1) * gap;
+  const H = rows.length * (groupH + groupGap);
+  const max = Math.max(...rows.flatMap(r => r.values)) * (pad || 1.2);
+  const plotW = W - labelW - 8;
+  container.innerHTML = "";
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, height: H }, container);
+  // light grid
+  [0.25, 0.5, 0.75, 1].forEach(f => {
+    const x = labelW + plotW * f / (pad || 1.2);
+    el("line", { x1: x, x2: x, y1: 0, y2: H - groupGap / 2, stroke: "#222b34", "stroke-width": 1 }, svg);
+  });
+  rows.forEach((r, i) => {
+    const y0 = i * (groupH + groupGap);
+    const t = el("text", { x: labelW - 12, y: y0 + groupH / 2 + 4.5, "text-anchor": "end", fill: "#c4ccd4", "font-size": fs }, svg);
+    t.textContent = r.label;
+    r.values.forEach((v, j) => {
+      const y = y0 + j * (barH + gap);
+      const w = Math.max(2, plotW * v / max);
+      const rect = el("rect", { x: labelW, y, width: 0, height: barH, rx: 4, fill: colors[j], class: "bar" }, svg);
+      requestAnimationFrame(() => {
+        rect.style.transition = "width .6s cubic-bezier(.2,.7,.2,1)";
+        rect.setAttribute("width", w);
+      });
+      const txt = el("text", { x: labelW + w + 7, y: y + barH / 2 + 4.3, fill: "#a7b1bb", "font-size": series > 1 ? fs - 1.5 : fs - 0.5 }, svg);
+      txt.textContent = fmt(v);
+      const hit = el("rect", { x: labelW, y: y - gap, width: plotW, height: barH + gap * 2, fill: "transparent" }, svg);
+      hit.addEventListener("mousemove", e => showTip(e, `<b>${r.label}</b>${names ? "<br>" + names[j] : ""}<br>${fmt(v)}`));
+      hit.addEventListener("mouseleave", hideTip);
+    });
+  });
+}
+
+/* ================= Tabs helper ================= */
+function tabs(container, options, onPick, start) {
+  container.innerHTML = "";
+  options.forEach(o => {
+    const b = document.createElement("button");
+    b.textContent = o;
+    b.onclick = () => { [...container.children].forEach(c => c.classList.toggle("on", c === b)); onPick(o); };
+    container.appendChild(b);
+  });
+  const first = [...container.children][options.indexOf(start || options[0])];
+  first.classList.add("on"); onPick(start || options[0]);
+  return o => container.children[options.indexOf(o)].click();
+}
+
+/* ================= Slide content ================= */
+function drawUS() {
+  hbar(document.getElementById("c-us"),
+       [{ label: "United States", values: [12220] }, { label: "All other countries", values: [1752] }],
+       ["#2fa37f"], v => v.toLocaleString() + " rows (" + Math.round(v / 139.72) + "%)", null, 1.75);
+}
+
+let drvKey = "Experience";
+function drawDrivers() {
+  const d = DRIVERS[drvKey];
+  hbar(document.getElementById("c-drv"), d.data.map(([l, v]) => ({ label: l, values: [v] })), ["#2fa37f"], fmtUSD);
+  document.getElementById("drv-title").textContent = d.title;
+  document.getElementById("drv-text").textContent = d.text;
+}
+
+let ksaKind = "Individual roles", ksaCur = "USD per year";
+function drawKSA() {
+  const d = KSA[ksaKind];
+  const f = ksaCur === "USD per year" ? fmtUSD : fmtSAR;
+  hbar(document.getElementById("c-ksa"), d.rows.map(([l, a, b, c]) => ({ label: l, values: [a, b, c] })),
+       ["#2fa37f", "#3987e5", "#c98500"], f, ["Saudi Arabia", "Global excl. US", "United States"], 1.3);
+  document.getElementById("ksa-title").textContent = d.title;
+  document.getElementById("ksa-text").textContent = d.text;
+}
+
+let mKey = "Accuracy";
+function drawModel() {
+  const d = MODELS[mKey];
+  hbar(document.getElementById("c-model"), d.data.map(([l, v]) => ({ label: l, values: [v] })), ["#2fa37f"], d.fmt);
+  document.getElementById("m-title").textContent = d.title;
+  document.getElementById("m-cap").textContent = d.cap;
+}
+
+let cleanStep = 0;
+function buildClean() {
+  const wrap = document.getElementById("clean-steps"), detail = document.getElementById("clean-detail");
+  CLEAN.forEach((s, i) => {
+    if (i) { const a = document.createElement("div"); a.className = "arrow"; a.innerHTML = "&#8250;"; wrap.appendChild(a); }
+    const b = document.createElement("button");
+    b.className = "step"; b.innerHTML = `<div class="n">STEP ${i + 1}</div><div class="t">${s.t}</div>`;
+    b.onclick = () => {
+      cleanStep = i;
+      wrap.querySelectorAll(".step").forEach(x => x.classList.toggle("on", x === b));
+      detail.innerHTML = s.html;
+    };
+    wrap.appendChild(b);
+  });
+  wrap.querySelector(".step").click();
+}
+
+function buildFlow() {
+  const wrap = document.getElementById("model-flow");
+  FLOW.forEach(([t, d], i) => {
+    if (i) { const a = document.createElement("div"); a.className = "arrow"; a.innerHTML = "&#8250;"; wrap.appendChild(a); }
+    const s = document.createElement("div");
+    s.className = "step" + (i === 2 ? " on" : ""); s.style.cursor = "default";
+    s.innerHTML = `<div class="n">${i + 1}</div><div class="t">${t}</div><div class="small" style="margin-top:4px">${d}</div>`;
+    wrap.appendChild(s);
+  });
+}
+
+function buildTools() {
+  const g = document.getElementById("tools");
+  TOOLS.forEach(([stage, ic, name, what]) => {
+    const c = document.createElement("div");
+    c.className = "card";
+    c.innerHTML = `<div class="stage">${stage}</div><div class="tool"><div class="ic">${ICONS[ic]}</div><div><h3>${name}</h3><p>${what}</p></div></div>`;
+    g.appendChild(c);
+  });
+}
+
+/* ================= Navigation ================= */
+const slides = [...document.querySelectorAll(".slide")];
+const dots = document.getElementById("dots");
+let cur = 0;
+slides.forEach((_, i) => {
+  const b = document.createElement("button");
+  b.setAttribute("aria-label", "Go to slide " + (i + 1));
+  b.onclick = () => go(i);
+  dots.appendChild(b);
+});
+const redraw = [null, null, drawUS, null, drawDrivers, drawKSA, drawModel, null, null];
+function go(i, step) {
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  const st = STEPS[cur];
+  if (st) st.set(step === "last" ? st.n - 1 : 0);
+  slides.forEach((s, j) => s.classList.toggle("active", j === cur));
+  [...dots.children].forEach((d, j) => d.classList.toggle("on", j === cur));
+  document.getElementById("count").textContent = (cur + 1) + " / " + slides.length;
+  document.getElementById("prev").disabled = cur === 0;
+  document.getElementById("next").disabled = cur === slides.length - 1;
+  document.getElementById("progress").style.width = ((cur + 1) / slides.length * 100) + "%";
+  hideTip();
+  if (redraw[cur]) requestAnimationFrame(redraw[cur]);   // replay the bar animation
+  try { history.replaceState(null, "", "#" + (cur + 1)); } catch (e) {}
+}
+/* Next / previous: walk the steps inside a slide first, then change slide */
+function next() {
+  const st = STEPS[cur];
+  if (st && st.get() < st.n - 1) { st.set(st.get() + 1); return; }
+  if (cur < slides.length - 1) go(cur + 1);
+}
+function prev() {
+  const st = STEPS[cur];
+  if (st && st.get() > 0) { st.set(st.get() - 1); return; }
+  if (cur > 0) go(cur - 1, "last");
+}
+document.getElementById("prev").onclick = prev;
+document.getElementById("next").onclick = next;
+document.addEventListener("keydown", e => {
+  if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); if (document.activeElement) document.activeElement.blur(); next(); }
+  if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); prev(); }
+  if (e.key === "Home") go(0);
+  if (e.key === "End") go(slides.length - 1);
+});
+let tx = null;
+document.addEventListener("touchstart", e => { tx = e.touches[0].clientX; }, { passive: true });
+document.addEventListener("touchend", e => {
+  if (tx === null) return;
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 60) (dx < 0 ? next : prev)();
+  tx = null;
+});
+window.addEventListener("resize", () => { if (redraw[cur]) redraw[cur](); });
+
+/* ================= Init ================= */
+buildClean(); buildFlow(); buildTools();
+const pickDrv = tabs(document.getElementById("drv-tabs"), Object.keys(DRIVERS), k => { drvKey = k; drawDrivers(); });
+const pickKind = tabs(document.getElementById("ksa-kind"), Object.keys(KSA), k => { ksaKind = k; drawKSA(); });
+const pickCur = tabs(document.getElementById("ksa-cur"), ["USD per year", "SAR per month"], k => { ksaCur = k; drawKSA(); });
+const pickModel = tabs(document.getElementById("m-tabs"), Object.keys(MODELS), k => { mKey = k; drawModel(); });
+
+/* Steps inside slides (index = slide number - 1) */
+const KSA_ORDER = [["Individual roles", "USD per year"], ["Individual roles", "SAR per month"],
+                   ["Leadership roles", "USD per year"], ["Leadership roles", "SAR per month"]];
+const STEPS = {
+  3: { n: CLEAN.length, get: () => cleanStep,
+       set: i => document.querySelectorAll("#clean-steps .step")[i].click() },
+  4: { n: Object.keys(DRIVERS).length, get: () => Object.keys(DRIVERS).indexOf(drvKey),
+       set: i => pickDrv(Object.keys(DRIVERS)[i]) },
+  5: { n: KSA_ORDER.length, get: () => KSA_ORDER.findIndex(([k, c]) => k === ksaKind && c === ksaCur),
+       set: i => { const [k, c] = KSA_ORDER[i]; if (k !== ksaKind) pickKind(k); if (c !== ksaCur) pickCur(c); } },
+  6: { n: Object.keys(MODELS).length, get: () => Object.keys(MODELS).indexOf(mKey),
+       set: i => pickModel(Object.keys(MODELS)[i]) }
+};
+const startAt = parseInt((location.hash || "#1").slice(1), 10);
+go(isNaN(startAt) ? 0 : startAt - 1);
+</script>
+</body>
+</html>
